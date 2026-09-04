@@ -1,0 +1,54 @@
+# swarmtyp
+
+Collaborative Typst editing that runs in the browser and lives on Swarm. The Typst compiler runs as WebAssembly (typst.ts); co-editing uses Solar Punk's `swarm-collaborative-docs` (Yjs snapshots on Swarm feeds, live deltas over WebRTC signalled through feeds); the app, blobs, fonts, packages and published PDFs are Swarm content. No server.
+
+Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
+
+## Status
+
+Design only, 2026-09-04. No code. Next step: Phase 0 spikes in `docs/spikes.md`.
+
+## Read in this order
+
+1. `docs/design.md` — the architecture. Read all of it before writing anything.
+2. `docs/plan.md` — phases and milestones; says where we are.
+3. `docs/spikes.md` — what to verify first, with exit criteria and result slots.
+4. `docs/decisions.md` — decided, proposed, open. Do not silently re-decide DECIDED items or close OPEN ones.
+5. `docs/threats.md` — what can go wrong and what the design does about it.
+6. `docs/references.md` — the outside projects, with versions.
+
+## Rules for working here
+
+- Spikes before product code. Record each spike's result in `docs/spikes.md` before building on it.
+- No backend. If a feature seems to need one, write an OPEN entry in `docs/decisions.md` instead of adding it.
+- Reuse the ecosystem: `@solarpunkltd/swarm-collaborative-docs`, `@ethersphere/bee-js` 12.x, typst.ts. When a library falls short, extend it upstream (Solar Punk owns `swarm-collaborative-docs`); do not fork it into this repo.
+- Keep the bundle small. Swarm serves every byte on first load; measure before adding a dependency.
+- The docs are the spec. When code and docs disagree, fix one in the same change. Every decision gets a D-number.
+- Swarm terms as in the Swarm docs: reference, chunk, postage stamp / batch, feed, manifest, Bee, ACT, GSOC. Feeds get immutable stamps, always.
+- Treat collaborator content as untrusted: sanitise rendered SVG before it reaches the DOM (`docs/threats.md` T5).
+
+## Stack (proposed; Phase 0 confirms)
+
+TypeScript · Vite (`base: './'`, hash routing) · React · CodeMirror 6 + `y-codemirror.next` · Yjs · typst.ts 0.7.x (`@myriaddreamin/typst.ts`, `typst-ts-web-compiler`, `typst-ts-renderer`) in a Web Worker · `@ethersphere/bee-js` 12.x against Bee 2.8.x · `@solarpunkltd/swarm-collaborative-docs` with `createSwarmRtcTransport` · Vitest for logic · Playwright for two-browser collaboration tests against a Bee Factory network.
+
+## Layout (once code exists)
+
+```
+src/app      shell, routing, settings        src/compile  worker, shadow FS, packages, fonts, render
+src/editor   CodeMirror, Typst mode, Yjs     src/swarm    Bee client, uploads, publish, cache
+src/project  Y.Doc schema, files, genesis    src/ui
+src/collab   SwarmDoc wiring, keys, members
+tools/deploy build → upload → feed           tools/mirror typst/packages → Swarm
+e2e/         Playwright                      spikes/      throwaway Phase 0 code (delete when done)
+```
+
+## Local development (to be filled in during Phase 0)
+
+- A Bee 2.8.x light node with CORS allowing the dev origin, or a Bee Factory network.
+- An immutable postage batch on that node.
+- `.env.local` with `VITE_BEE_URL` and `VITE_STAMP`; never commit stamps or keys.
+
+## Related Solar Punk work
+
+- `swarm-collaborative-docs` — the collaboration layer (D-02).
+- `dappdata` (IDEA-190) — identity derivation and per-user project list (Phase 3).
