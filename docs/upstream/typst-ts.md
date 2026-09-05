@@ -71,3 +71,14 @@ Working recipe with 0.7.0, for the threads asking for it: build an index offline
 ## 7. Docs: bare specifiers in the ESM build
 
 `dist/esm/*.mjs` imports `@myriaddreamin/typst-ts-web-compiler` and `@myriaddreamin/typst-ts-renderer` by bare specifier via dynamic `import()`, so the ESM build cannot be served as plain files without an import map or a bundler. Not a bug, but a one-line note in the README (with the import map) would help people deploying to static hosts.
+
+---
+
+## Standalone SVG output is not well-formed XML (unescaped `&` in the inline script)
+
+Not filed yet (2026-09-05, typst.ts 0.7.0, S11). `renderSvg({ format: 'vector' })` returns an SVG whose inline `<script type="text/javascript">` contains `&&` and other bare ampersands; `<` and `>` are escaped, `&` is not. Inserted with `innerHTML` (the HTML parser) it works, which is how the examples use it. Saved as a `.svg` file and opened directly or through `<object>`/`<img>`, Chromium and Firefox/Electron stop at the first bare `&` (`xmlParseEntityRef: no name`) and render only up to it. Suggested: wrap the script body in `<![CDATA[ … ]]>` or escape `&`, and offer an option to omit the script for static export.
+
+## Expose HTML export in the web compiler
+
+Not filed yet (2026-09-05, S11). `reflexo-typst` has an `html` feature (`typst-html` + `typst-svg`) that the CLI enables by default, but `typst-ts-web-compiler` builds without it and its `compile`/`get_artifact` accept only `vector` and `pdf`. A browser editor that wants Typst's HTML export (experimental in Typst 0.13–0.15) has no path. Suggested: an `html` cargo feature on the web compiler with an `"html"` `fmt` arm returning the document string, off by default if the wasm size matters, or a separate `typst-ts-web-compiler-html` package.
+

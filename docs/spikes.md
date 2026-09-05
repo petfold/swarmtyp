@@ -175,5 +175,20 @@ Method: (1) publish a two-page starter as a collection (`index.html`, SVG pages,
 
 Exit: a table of gateways versus rendering; yes/no on HTML export in the web build with an upstream issue if no; a list of what the stylesheet needs; a go/no-go for the paged site as the first release.
 
-Result: *(slot)*
+Result, part 1 (2026-09-05, `spikes/s11/build-site.mjs`, `spikes/s1/site/s11.html`): **a paged site works today; public gateways behave as D-22 found, with two named exceptions.** The browser compiler produced a two-page document (equation, footnote, page numbers) as one SVG (165 KB) plus the PDF (68 KB); a static `index.html` with the SVG inline and a PDF link was uploaded as a collection (`acee373d…19bf`, 235 KB). Found on the way: typst.ts's `renderSvg` output is not well-formed XML because its inline `<script>` contains unescaped `&&`; served as a standalone `image/svg+xml` file, Freedom and Chromium stop at the first bare `&` and render only the first page (`xmlParseEntityRef: no name`). Stripping the script (it only drives text selection in the live preview) fixes it and the file parses as XML; inlining the SVG in the HTML avoids the issue as well. Upstream note in `docs/upstream/typst-ts.md`.
+
+| Where | Result for a static site by reference |
+|---|---|
+| Local Bee (`127.0.0.1:1633/bzz/<ref>/`) | renders, 2 pages, PDF link, no failed requests |
+| Freedom Browser (`bzz://<ref>/`, fresh profile, bundled Ant) | renders both pages with the equation in 4–6 s once Ant is up (235 KB; Ant itself took about 2 min to start), per-hash origin, no parse error after the script strip |
+| `download.gateway.ethswarm.org/bzz/<ref>/` | 200 with correct types, but `Content-Disposition: attachment` on every file, including `.svg`: browsers download, nothing renders |
+| `bzz.link/bzz/<ref>/`, `<cid>.bzz.link`, `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org` | 302 to `bzz.link/forbidden?hash=…`, an approval form; its text: hashes registered with ENS "can always be accessed via bzz.link subdomains, for example myensname.bzz.link", so an ENS name with a Swarm contenthash bypasses the allow-list |
+| `gateway.ethswarm.org/bzz/<ref>/` | 200 but the gateway's own landing page, not the content |
+| `<name>.gwei.domains` | not testable without a `.gwei` name (0.0005 ETH for 5+ characters, registration is a wallet transaction); its source says it fetches Swarm content from `download.gateway.ethswarm.org` and "its forced attachment header is removed so websites render inline", cached 5 min, so a `.gwei` name should make a swarmtyp site viewable in any browser |
+
+Consequences for D-24: the paged site is a go for Phase 3; a name is not a nicety but the only way ordinary browsers reach the site (ENS via `<name>.bzz.link`, GNS via `<name>.gwei.domains`); both gateways are operated by others and proxy through `download.gateway.ethswarm.org`, so availability follows that gateway (D-22). To finish the table: register one `.gwei` test name (owner's wallet, under a dollar) and one ENS subname, point both at the site's feed manifest, and record whether the pages render and how long an update takes to show (5 min cache on gwei.domains).
+
+Result, part 2 (2026-09-05): **HTML export is not in the web build.** `typst-ts-web-compiler` on `main` accepts `fmt` of `vector` or `pdf` only (`packages/compiler/src/lib.rs`), the JS wrapper's `CompileFormatEnum` is `vector | pdf`, and the crate's features list `pdf`, `svg`, `ast` but no `html`; the `html` feature (`typst-html` + `typst-svg`) exists in `reflexo-typst` and is on by default only in the CLI. Exposing it in the web compiler is a feature flag plus a `"html"` arm and a wasm size cost; ask upstream (draft in `docs/upstream/typst-ts.md`) before deciding whether swarmtyp builds its own compiler variant (D-04 keeps that door open).
+
+Result, part 3: not run. It needs a Typst CLI with `--features html` on this machine (not installed; a download the owner should approve) or the upstream change from part 2. The Typst docs say the exporter emits semantic markup without CSS and that `target()` lets a source serve both outputs, so a swarmtyp stylesheet is unavoidable for the flowing site; the list of what it must cover waits for a real sample.
 
