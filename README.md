@@ -16,7 +16,7 @@ This is not a port of typst.app, which is Typst GmbH's closed product. swarmtyp 
 
 ## Status
 
-Design stage. See `docs/design.md`, then `docs/plan.md`; `docs/competition.md` compares swarmtyp with typst.app. No code yet; Phase 0 spikes come first.
+Phase 1 (M1) is live: a single-user editor at a stable Swarm address. Open it in Freedom Browser at `bzz://b656fac57eb02756af40279cf70275969c9f9219818af7cceee34101f169a100/` or through your own Bee node at `http://127.0.0.1:1633/bzz/<that hash>/`. Read `docs/user-guide.md` to use it, `docs/design.md` and `docs/plan.md` to work on it; `docs/competition.md` compares swarmtyp with typst.app.
 
 ## Licence
 

@@ -1,0 +1,112 @@
+# swarmtyp user guide
+
+Status: Phase 1 build (M1, 2026-09-05). One person, one project, on your own device. Collaboration comes in Phase 2; this guide grows with the app.
+
+swarmtyp is a Typst editor that runs entirely in your browser and lives on Swarm. The compiler is WebAssembly, the app is a Swarm collection, fonts and packages are Swarm content, and nothing you write leaves your machine unless you upload it. There is no account and no server.
+
+## 1. Opening the app
+
+You need a way to read Swarm. Either of these works:
+
+- **Freedom Browser** (recommended if you have no Swarm node). Paste this into the address bar:
+
+  ```
+  bzz://b656fac57eb02756af40279cf70275969c9f9219818af7cceee34101f169a100/
+  ```
+
+  Freedom fetches the app through its built-in Swarm node. The first open is slow: about 12 MB of compiler and code arrive at the speed of a light node, which took about six minutes in our test, with a progress percentage in the status bar. The second open comes from Freedom's cache and takes seconds. If Freedom shows "External Nodes Detected" because a Bee node runs on your machine, either choice works; "Use External" makes Freedom read through your Bee, which is faster.
+
+- **Your own Bee node** (Swarm Desktop or a light node on `http://127.0.0.1:1633`). Open:
+
+  ```
+  http://127.0.0.1:1633/bzz/b656fac57eb02756af40279cf70275969c9f9219818af7cceee34101f169a100/
+  ```
+
+  This address is a *feed manifest*: it always points at the latest release, so bookmark it.
+
+The status bar at the top says what is happening: `loading compiler 48%`, then `compiler ready`, then `compiled in 465 ms` after each change.
+
+## 2. The demo document
+
+On first open you get "My first document", one file `main.typ`, and the preview on the right shows what the demo exercises:
+
+- **Text and a heading** set in Libertinus Serif, the Typst default, fetched from Swarm the moment the document needs it.
+- **An equation** set in New Computer Modern Math, another lazy font; the maths face is 1.4 MB and loads only because the document has an equation.
+- **A package import**, `@preview/oxifmt`, served from swarmtyp's mirror on Swarm. The Problems panel lists which packages the document used and where each came from.
+- **Raw text** in DejaVu Sans Mono.
+
+Things to try, in order:
+
+1. Type anywhere. The preview recompiles about 200 ms after you stop typing; the status bar shows the compile time.
+2. Break something: write `#let x = 1 + "a"`. The error is underlined in the editor, listed in Problems at the bottom left with its line, and the status bar counts it. Fix it and it disappears.
+3. Add a file with the `+` button in the Files panel, for example `chapters/two.typ`, write a heading in it, go back to `main.typ` and add `#include "chapters/two.typ"`.
+4. Upload an image with the `↑` button (needs a postage batch, see Settings). It appears in Files marked `◆`; use it with `#image("logo.png", width: 3cm)`.
+5. Export PDF. The file is produced in your browser and saved by it.
+
+## 3. The screen
+
+- **Files** (left): every file of the project. `●` marks the main file, the one that is compiled and exported. Hover a file for *main*, rename `✎` and delete `×`. Text files (`.typ`, `.bib`, `.csv`, `.json`, `.yaml`, `.toml`, `.txt`, `.svg`) open in the editor; other files are blobs on Swarm and show their reference.
+- **Editor** (middle): CodeMirror with Typst highlighting. Errors and warnings from the last compile are underlined; hover for the message.
+- **Preview** (right): the pages, drawn only while they are in view. The zoom slider at the top rescales them.
+- **Problems** (bottom left): errors and warnings with file and position; click one to open its file. Below it, the packages the document used and their source.
+- **Status bar**: loading progress, `compiling… fetching font X` while fonts or packages are being fetched for the first time, then the compile time and the error count.
+- **⚙ Settings**: see below.
+
+### Keyboard
+
+| Action | Keys |
+|---|---|
+| Undo, redo | Ctrl-Z, Ctrl-Shift-Z (Cmd on macOS) |
+| Search and replace | Ctrl-F |
+| Go to line | Alt-G |
+| Toggle line comment | Ctrl-/ |
+| Next diagnostic | F8 |
+| Fold, unfold | Ctrl-Shift-[ and Ctrl-Shift-] |
+| Indent with Tab | Tab and Shift-Tab |
+
+## 4. Files, images and uploads
+
+Text files live in the project on your device. Images, fonts and other binary files are uploaded to Swarm when you add them and the project keeps only their reference. Two things follow:
+
+- **Uploads need a postage batch** on the Bee node you are connected to. Enter its id in Settings. Without one the upload button explains why it cannot proceed.
+- **Everything uploaded is public and permanent** for as long as the batch pays for it. Anyone with the reference can fetch it. Do not upload what you would not publish.
+
+Freedom Browser users without a Bee node cannot upload yet: the app's writes go to a Bee node's HTTP API, and Freedom's node accepts writes only through its own provider, which the app does not use yet. Reading, editing and exporting work fully.
+
+## 5. Packages and fonts
+
+`#import "@preview/name:version"` works as in Typst. The app looks in swarmtyp's mirror on Swarm first, then, if **Fetch missing packages from packages.typst.org** is on in Settings, at Typst's package server. The Problems panel shows which source served each package. Turn the fallback off for privacy (the package server would learn which packages you use) or to be sure a document builds from Swarm alone. Mirrored today: `oxifmt`, `tiaoma`, `cetz`, `fletcher`, `codly`, `showybox`, each at one version; the full Universe mirror is planned.
+
+Fonts available without any setup: Libertinus Serif, New Computer Modern and New Computer Modern Math, DejaVu Sans Mono, each in its regular, bold and italic faces. Only the faces a document uses are downloaded. Project-specific fonts are not supported yet.
+
+## 6. Settings
+
+- **Bee node URL**: where the app reads fonts, packages and blobs and where it uploads. Default `http://127.0.0.1:1633`. The line under it says whether the node answers.
+- **Postage batch id**: an immutable batch on that node, for uploads only. Never shared, stored on this device.
+- **Fetch missing packages from packages.typst.org**: the fallback described above.
+- **Zoom**: preview scale.
+
+## 7. Where your work is
+
+In this build the project is stored in your browser's local storage on this device, saved after every change and restored when you reopen the same address. It is not on Swarm and not shared. Two cautions:
+
+- Everything served from the same Bee node address (`http://127.0.0.1:1633/…`) shares one browser origin, so other Swarm apps opened through the same node can read this storage. Freedom gives each app its own origin and does not have this problem. Phase 2 moves projects to Swarm feeds and Phase 4 encrypts them.
+- Clearing site data clears the project. Export a PDF or copy the source if it matters.
+
+## 8. Limits of this build
+
+- One person at a time; live collaboration and sharing links are Phase 2.
+- Compiler: Typst 0.14.2 (typst.ts 0.7.0). typst.app runs 0.15.1, so a few newest features are missing. The version is shown in Settings.
+- First load is about 12 MB; on a Swarm light node that is minutes, afterwards cached.
+- Preview is raster: crisp at the chosen zoom, redrawn when you zoom. No text selection in the preview.
+- No project-specific fonts, no source-to-preview jumping, no comments.
+
+## 9. If something goes wrong
+
+- **`compiler failed: Failed to fetch`**: the app could not read its own files. In Freedom, wait for the node to connect and reload; on a Bee node, check the node is running.
+- **`no font could be found`** on an equation: the maths face did not load; reload once the node is connected.
+- **Upload fails**: the batch id is missing, not usable, or belongs to a different node. Check `⚙` and the node's stamps.
+- **Packages missing** with the fallback off: the package is not on the mirror yet; turn the fallback on or ask for it to be mirrored.
+- **Stale project after an update**: the app keeps your project across releases; if a release changes the project format you will be told.
+
+Questions and problems: https://github.com/petfold/swarmtyp/issues

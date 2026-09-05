@@ -17,6 +17,7 @@ Phase 1 M1 reached 2026-09-05 (stable address `bzz/b656fac5…a100/` via the rel
 5. `docs/threats.md` — what can go wrong and what the design does about it.
 6. `docs/references.md` — the outside projects, with versions.
 7. `docs/competition.md` — what typst.app is made of, what it charges for, and what we may not copy from it.
+8. `docs/user-guide.md` — how to open and use the current build; update it in the same change as any user-visible behaviour.
 
 ## Rules for working here
 
