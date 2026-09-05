@@ -5,7 +5,7 @@ export type PackageIndex = Record<string, string>; // "preview/<name>/<version>"
 export interface Diagnostic { package: string; path: string; severity: 'error' | 'warning' | 'hint' | string; range: string; message: string }
 
 export type ToWorker =
-  | { type: 'init'; beeUrl: string; compilerUrl: string; fontIndex: FontIndexEntry[]; packageIndex: PackageIndex; allowFallback: boolean }
+  | { type: 'init'; beeUrl: string; compilerUrl: string; compilerVersion: string; fontIndex: FontIndexEntry[]; packageIndex: PackageIndex; allowFallback: boolean; prefetch: string[] }
   | { type: 'compile'; id: number; mainFile: string; texts: Record<string, string>; blobs: Record<string, string>; format: 'vector' | 'pdf' };
 
 export type FromWorker =

@@ -1,7 +1,15 @@
 // One hook decides where the Y.Doc comes from: this device (route `local`) or a Swarm project session (route `#/p/<id>`).
 import { useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
-import { filesMap, initProject, loadLocal } from '../project/model';
+import { filesMap, initProject, loadLocal, saveLocal, textOf } from '../project/model';
+import { LEGACY_STARTERS } from './starter-legacy';
+
+/** One text file that still equals an earlier release's starter, word for word: nobody has edited it. */
+function isUntouchedLegacyStarter(doc: Y.Doc, starter: string): boolean {
+  if (filesMap(doc).size !== 1 || !filesMap(doc).has('/main.typ')) return false;
+  const text = textOf(doc, '/main.typ').toString();
+  return text !== starter && LEGACY_STARTERS.includes(text);
+}
 import type { Member, RemoteCursor, Session } from '../collab/session';
 import type { CursorInfo } from '../editor/remote-cursors';
 import type { Settings } from './settings';
@@ -30,8 +38,9 @@ export function useProject(route: Route, settings: Settings, starter: string): P
     setState({ doc: null, session: null, members: [], cursors: [], error: null, phase: 'opening', remoteVersion: 0 });
     (async () => {
       if (route.kind === 'local') {
-        const doc = new Y.Doc();
+        let doc = new Y.Doc();
         if (!loadLocal(doc)) initProject(doc, 'My first document', starter);
+        else if (isUntouchedLegacyStarter(doc, starter)) { doc = new Y.Doc(); initProject(doc, 'My first document', starter); saveLocal(doc); }
         if (!cancelled) setState((s) => ({ ...s, doc, phase: 'ready' }));
         return;
       }

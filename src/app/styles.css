@@ -27,3 +27,5 @@ button:hover { border-color: var(--accent); }
 .settings .hint { color: var(--muted); font-size: 12px; }
 .members { display: flex; gap: 6px; align-items: center; font-size: 12px; } .member { border: 1px solid; border-radius: 12px; padding: 1px 8px; background: var(--panel); } .member small { color: var(--muted); font-family: ui-monospace, monospace; } .member.me { font-weight: 600; } .member.connected::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #2a9d3f; margin-right: 5px; vertical-align: middle; }
 .banner { background: #fef3c7; color: #92400e; border-bottom: 1px solid #f59e0b; padding: 6px 10px; font-size: 13px; }
+.topbar a.help { font-size: 13px; padding: 3px 8px; border: 1px solid var(--border, #ccc); border-radius: 4px; color: inherit; text-decoration: none; }
+.topbar a.help:hover { background: var(--panel); }

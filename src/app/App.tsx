@@ -163,6 +163,7 @@ export function App() {
               <button className="leave" title="Remove this project's copy from this browser; the project stays on Swarm for everyone with the link" onClick={() => { if (confirm('Leave this project? Its copy on this device is deleted. The project stays on Swarm and you can open the link again later.')) { const s = project.session; void (s ? s.leave() : Promise.resolve()).finally(() => { location.hash = ''; }); } }}>Leave</button>
             </>}
         <button onClick={exportPdf} disabled={status.state !== 'ready'}>Export PDF</button>
+          <a className="help" href="guide/" target="_blank" rel="noopener" title="The user guide, published on Swarm next to the app">Guide</a>
         <button onClick={() => setShowSettings((v) => !v)} aria-label="Settings">⚙</button>
       </header>
       {readSource === 'gateway' && route.kind === 'local' && <div className="banner">No Bee node answers at {settings.beeUrl}: fonts and packages come from the public read gateway, so you can write and export. Uploading images and sharing a project need a node with a postage batch (⚙ Settings).</div>}
@@ -205,6 +206,7 @@ export function App() {
           <div className="hint">{bee === null ? 'checking…' : bee.ok ? `connected, Bee ${bee.version}` : `not reachable; fonts, packages and images are read from ${PUBLIC_READ_GATEWAY} instead, uploads and sharing need a node`}</div>
           <label>Postage batch id (for uploads) <input value={settings.stamp} onChange={(e) => setSettings({ ...settings, stamp: e.target.value.trim() })} onBlur={() => saveSettings(settings)} placeholder="64 hex characters, an immutable batch on your node" /></label>
           <label>STUN server (for direct connections between collaborators, D-15) <input value={settings.stun} onChange={(e) => setSettings({ ...settings, stun: e.target.value })} onBlur={() => saveSettings(settings)} /></label>
+          {route.kind === 'local' && <div className="hint">Your own document is saved in this browser. <button onClick={() => { if (confirm('Replace your document with the current demo document? This cannot be undone.')) { localStorage.removeItem('swarmtyp:project:local'); location.reload(); } }}>Start over with the demo document</button></div>}
           <label><input type="checkbox" checked={settings.allowFallback} onChange={(e) => { const s = { ...settings, allowFallback: e.target.checked }; setSettings(s); saveSettings(s); }} /> Fetch missing packages from packages.typst.org (D-08; leaks which packages you use)</label>
           <div className="hint">Compiler: Typst {m.typstVersion} via typst.ts 0.7.0. Project created {m.created ? new Date(m.created).toLocaleString() : '—'}. Everything you upload is public and permanent on Swarm (T10).</div>
           <button onClick={() => setShowSettings(false)}>Close</button>

@@ -49,9 +49,9 @@ e2e/         Playwright                      spikes/      throwaway Phase 0 code
 
 - A Bee 2.8.x light node with CORS allowing the dev origin (Swarm Desktop's node on `http://127.0.0.1:1633` does by default), plus an immutable postage batch on it for uploads.
 - `.env.local` with `VITE_BEE_URL` and `VITE_STAMP` (see `.env.example`); never commit stamps or keys.
-- `pnpm install`, then `node tools/collab/build-lib.mjs` once (builds `swarm-collaborative-docs` from a pinned commit into `vendor/`, gitignored; `--force` to rebuild), then `pnpm dev` (http://127.0.0.1:5174), `pnpm test`, `pnpm build` (runs `tools/build-assets.mjs`, which gzips the compiler WASM into `public/wasm/compiler.wasm.bin`, then type-checks and bundles), `pnpm release` (uploads `dist/` as a collection and prints the reference).
+- `pnpm install`, then `node tools/collab/build-lib.mjs` once (builds `swarm-collaborative-docs` from a pinned commit into `vendor/`, gitignored; `--force` to rebuild), then `pnpm dev` (http://127.0.0.1:5174), `pnpm test`, `pnpm build` (runs `tools/build-assets.mjs`, which gzips the compiler WASM into `public/wasm/compiler.wasm.bin`, and `tools/guide/build-guide.mjs`, which renders `docs/user-guide.md` to `public/guide/index.html`, then type-checks and bundles), `pnpm release` (uploads `dist/` as a collection and prints the reference).
 - `pnpm test:e2e` runs the smoke test and the two-context collaboration test (`e2e/collab.spec.ts`, needs `VITE_STAMP` as well as the node; about a minute per browser). Tests reach the CodeMirror view through `.editor-host`'s `cmView` property.
-- Large assets are fetched in 1 MB ranges (`src/compile/ranged.ts`); keep it that way, Freedom's Ant truncates whole bodies.
+- Large assets are fetched in 1 MB ranges (`src/compile/ranged.ts`); keep it that way, Freedom's Ant truncates whole bodies. Fetched assets are kept in the Cache API (`src/compile/asset-cache.ts`: compiler and renderer by `COMPILER_VERSION`, fonts, packages and blobs by reference); bump `COMPILER_VERSION` in `src/compile/client.ts` when typst.ts changes.
 - Fonts come from `src/compile/fonts-index.json` (faces on Swarm by reference); rebuild it with the S4 script when the font set changes.
 
 ## Related Solar Punk work

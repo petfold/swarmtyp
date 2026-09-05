@@ -63,6 +63,7 @@ Things to try, in order:
 - **Problems** (bottom left): errors and warnings with file and position; click one to open its file. Below it, the packages the document used and their source.
 - **Status bar**: loading progress, `compiling… fetching font X` while fonts or packages are being fetched for the first time, then the compile time and the error count.
 - **People** (top right, shared projects only): one chip per person in the project, you first. A green dot means a direct connection is open with that person, so edits arrive as they type. Without the dot you have what they had written when you joined; their later edits arrive when you reload (a limit of the current library, see §10). The same person in two tabs shows twice.
+- **Guide** (top right): this guide, published on Swarm next to the app at `…/guide/`.
 - **⚙ Settings**: see below.
 
 ### Keyboard
@@ -116,7 +117,8 @@ While you type, the app writes your changes to your own feed on Swarm and sends 
 
 ## 8. Where your work is
 
-- **Your own document** (the address without `#/p/…`) is stored in this browser's local storage, saved after every change. It is not on Swarm and not shared.
+- **Your own document** (the address without `#/p/…`) is stored in this browser's local storage, saved after every change. It is not on Swarm and not shared. If you never edited the demo document, a new release replaces it with the current demo; if you did, it stays as you left it, and Settings has **Start over with the demo document**.
+- **The compiler, fonts and packages** are kept in the browser's cache once fetched (by version and by Swarm reference), so a reload or a new release re-downloads none of them; only the app's own code changes, about 1.5 MB. Fonts and packages the demo needs are fetched in parallel with the compiler on the first load.
 - **A shared project** is on Swarm as feeds, one per member, written with each member's own postage batch, plus a copy in this browser's IndexedDB so reopening the link is instant and works while Swarm is slow. Anyone with the link can read it.
 
 Two cautions:
@@ -130,7 +132,7 @@ Two cautions:
 - Tested with two and three people on one machine; two networks with a NAT between them are the next test.
 - Projects are public to anyone with the link; private projects are Phase 4.
 - Compiler: Typst 0.14.2 (typst.ts 0.7.0). typst.app runs 0.15.1, so a few newest features are missing. The version is shown in Settings.
-- First load is about 12 MB; on a Swarm light node that is minutes, afterwards cached.
+- First load is about 12 MB; on a Swarm light node that is minutes, afterwards cached. A reload with a warm cache compiles in a few seconds.
 - Preview is raster: crisp at the chosen zoom, redrawn when you zoom. No text selection in the preview.
 - No project-specific fonts, no source-to-preview jumping, no comments.
 

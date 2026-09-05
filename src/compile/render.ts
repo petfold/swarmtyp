@@ -3,6 +3,8 @@
 import { createTypstRenderer, type RenderSession, type TypstRenderer } from '@myriaddreamin/typst.ts';
 import rendererWasmUrl from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url';
 import { fetchRanged } from './ranged';
+import { cachedBytes, putBytes } from './asset-cache';
+import { COMPILER_VERSION } from './client';
 
 export interface PageInfo { pageOffset: number; width: number; height: number }
 
@@ -15,7 +17,10 @@ export class PageRenderer {
   async init() {
     const r = createTypstRenderer();
     // Ranged fetch + compile: a whole-body fetch of the 1 MB renderer is truncated by Freedom's Ant (S1).
-    const wasm = await WebAssembly.compile((await fetchRanged(new URL(rendererWasmUrl, document.baseURI).href)) as BufferSource);
+    const key = `renderer/${COMPILER_VERSION}`;
+    let bytes = await cachedBytes(key);
+    if (!bytes) { bytes = await fetchRanged(new URL(rendererWasmUrl, document.baseURI).href); void putBytes(key, bytes); }
+    const wasm = await WebAssembly.compile(bytes as BufferSource);
     await r.init({ getModule: () => wasm, beforeBuild: [] });
     this.renderer = r;
     // Keep one session alive for the lifetime of the renderer (runWithSession frees it when the callback returns).

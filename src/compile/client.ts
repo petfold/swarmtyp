@@ -6,6 +6,16 @@ import packagesIndex from './packages-index.json';
 export interface CompileOutput { artifact: Uint8Array | null; diagnostics: Diagnostic[]; ms: number; packages: { key: string; source: string }[] }
 export type Status = { state: 'loading'; stage: string; done?: number; total?: number } | { state: 'ready'; ms: number } | { state: 'error'; message: string };
 
+/** typst.ts release the shipped compiler comes from; part of the Cache API key so a new compiler is never served from an old cache. */
+export const COMPILER_VERSION = '0.7.0';
+/** What the starting document needs (fonts it uses, packages it imports); fetched in parallel with the compiler. */
+const STARTER_FONTS = ['LibertinusSerif-Regular.otf', 'LibertinusSerif-Bold.otf', 'LibertinusSerif-Italic.otf', 'NewCMMath-Book.otf', 'DejaVuSansMono.ttf'];
+const STARTER_PACKAGES = ['preview/cetz/0.5.2', 'preview/oxifmt/1.0.0'];
+const PREFETCH_REFS = [
+  ...(fontIndex as FontIndexEntry[]).filter((f) => STARTER_FONTS.includes(f.file)).map((f) => f.ref),
+  ...STARTER_PACKAGES.map((k) => (packagesIndex as Record<string, string>)[k]).filter(Boolean),
+];
+
 export class CompileClient {
   private worker: Worker;
   private nextId = 1;
@@ -26,7 +36,7 @@ export class CompileClient {
       else if (m.type === 'result') { this.onActivity(null); const w = this.waiters.get(m.id); this.waiters.delete(m.id); w?.({ artifact: m.artifact, diagnostics: m.diagnostics, ms: m.ms, packages: m.packages }); }
     };
     const compilerUrl = new URL('wasm/compiler.wasm.bin', new URL('./', document.baseURI)).href;
-    const init: ToWorker = { type: 'init', beeUrl: opts.beeUrl, compilerUrl, fontIndex: fontIndex as FontIndexEntry[], packageIndex: opts.packageIndex ?? (packagesIndex as PackageIndex), allowFallback: opts.allowFallback };
+    const init: ToWorker = { type: 'init', beeUrl: opts.beeUrl, compilerUrl, compilerVersion: COMPILER_VERSION, fontIndex: fontIndex as FontIndexEntry[], packageIndex: opts.packageIndex ?? (packagesIndex as PackageIndex), allowFallback: opts.allowFallback , prefetch: PREFETCH_REFS };
     this.worker.postMessage(init);
   }
   private set(s: Status) { this.status = s; this.onStatus(s); }
