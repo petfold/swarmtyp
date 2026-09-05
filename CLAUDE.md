@@ -6,7 +6,7 @@ Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
 
 ## Status
 
-Phase 1 (solo editor, M1) started 2026-09-05; Phase 0 results in `docs/spikes.md`, throwaway code under `spikes/`. Stack pinned: typst.ts 0.7.0 (D-04), CodeMirror 6 (D-03), canvas preview of visible pages (D-17). D-22 decided: in-browser clients (Freedom Browser, later weeb-3) are the path for users without a node; test in Freedom, load large assets in ranges.
+Phase 1 M1 reached 2026-09-05 (stable address `bzz/b656fac5…a100/` via the release feed; also verified in Freedom Browser); Phase 0 results in `docs/spikes.md`, throwaway code under `spikes/`. Stack pinned: typst.ts 0.7.0 (D-04), CodeMirror 6 (D-03), canvas preview of visible pages (D-17). D-22 decided: in-browser clients (Freedom Browser, later weeb-3) are the path for users without a node; test in Freedom, load large assets in ranges.
 
 ## Read in this order
 
