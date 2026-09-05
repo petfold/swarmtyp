@@ -26,7 +26,7 @@ You need a way to read Swarm. Any of these works:
 
   Freedom fetches the app through its built-in Swarm node. The first open is slow: about 12 MB of compiler and code arrive at the speed of a light node, which took about six minutes in our test, with a progress percentage in the status bar. The second open comes from Freedom's cache and takes seconds. If Freedom shows "External Nodes Detected" because a Bee node runs on your machine, either choice works; "Use External" makes Freedom read through your Bee, which is faster.
 
-- **Your own Bee node** (Swarm Desktop or a light node on `http://127.0.0.1:1633`). Open:
+- **Your own Bee node** (Swarm Desktop or a light node on `http://127.0.0.1:1633`). Bee cannot resolve `.gwei` names yet (asked for in ethersphere/bee#5600), so open the address behind the name:
 
   ```
   http://127.0.0.1:1633/bzz/b656fac57eb02756af40279cf70275969c9f9219818af7cceee34101f169a100/
