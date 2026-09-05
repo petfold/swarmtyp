@@ -9,3 +9,5 @@ spikes/**/node_modules/
 spikes/s1/site/
 spikes/**/out.pdf
 spikes/s5/lib/
+spikes/**/*.tar
+/Screenshot*.png
