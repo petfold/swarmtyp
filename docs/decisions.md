@@ -167,5 +167,5 @@ Proposal.
 4. **Reads without a node.** When the configured Bee URL does not answer, the app reads fonts, packages and blobs from `download.gateway.ethswarm.org` (ranged, CORS open); writes still need a node and a stamp, shown as today. This is the "read gateway" of D-22 without running one.
 5. **A background text inside the editor**: a first-run panel and an "About" entry, three sentences on what swarmtyp is and where the guide lives, linking to `guide.swarmtyp.gwei`; the starter document stays the hands-on demo.
 
-Costs: two or three owner transactions for subdomains; the app-through-gateway test before the root moves; the read fallback is a small change in `src/swarm/` plus a status line saying which source is in use.
+Costs: names are yearly (the manage panel shows `swarmtyp.gwei` expiring 2027-09-05; RENEW is a transaction, and a lapsed name drops the app's address), so the renewal goes on the owner's calendar and into the release checklist; two or three owner transactions for subdomains; the app-through-gateway test before the root moves; the read fallback is a small change in `src/swarm/` plus a status line saying which source is in use.
 
