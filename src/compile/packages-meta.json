@@ -1,0 +1,38 @@
+{
+ "preview/oxifmt/1.0.0": {
+  "licence": "MIT OR Apache-2.0",
+  "bytes": 20124,
+  "source": "https://packages.typst.org/preview/oxifmt-1.0.0.tar.gz",
+  "fetched": "2026-09-05"
+ },
+ "preview/tiaoma/0.3.0": {
+  "licence": "MIT",
+  "bytes": 461438,
+  "source": "https://packages.typst.org/preview/tiaoma-0.3.0.tar.gz",
+  "fetched": "2026-09-05"
+ },
+ "preview/cetz/0.5.2": {
+  "licence": "LGPL-3.0-or-later",
+  "bytes": 218960,
+  "source": "https://packages.typst.org/preview/cetz-0.5.2.tar.gz",
+  "fetched": "2026-09-05"
+ },
+ "preview/fletcher/0.5.8": {
+  "licence": "MIT",
+  "bytes": 50668,
+  "source": "https://packages.typst.org/preview/fletcher-0.5.8.tar.gz",
+  "fetched": "2026-09-05"
+ },
+ "preview/codly/1.3.0": {
+  "licence": "MIT",
+  "bytes": 29513,
+  "source": "https://packages.typst.org/preview/codly-1.3.0.tar.gz",
+  "fetched": "2026-09-05"
+ },
+ "preview/showybox/2.0.4": {
+  "licence": "MIT",
+  "bytes": 9515,
+  "source": "https://packages.typst.org/preview/showybox-2.0.4.tar.gz",
+  "fetched": "2026-09-05"
+ }
+}
