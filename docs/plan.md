@@ -35,6 +35,8 @@ Milestone M1: open the app at a `bzz` address through a gateway, write a two-fil
 
 Milestone M2: two people on two networks open the same link through a gateway, edit the same file and different files, see each other's cursors, both reload and lose nothing.
 
+After M2: the first public post to the Typst community and the questions to Typst GmbH listed in D-21.
+
 ## Phase 3 — Close the loop (3–4 weeks)
 
 - Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror.

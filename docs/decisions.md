@@ -81,3 +81,15 @@ Phase 2. One dependency on the same `Y.Doc`; reloads and node outages lose nothi
 ## D-20 — Origin isolation on gateways — OPEN
 
 On a path-based gateway (`https://gateway/bzz/<ref>/`) every app shares one origin, so any app served there can read swarmtyp's localStorage and IndexedDB, including a stored identity key (T14). Options: (a) recommend or require subdomain gateways (`<cid>.bzz.link` style) that give each app its own origin; (b) encrypt the key at rest with a passphrase; (c) keep keys in memory only until Phase 3's wallet derivation; (d) a combination. Decide before Phase 2 ships a key store.
+
+## D-21 — Relationship with Typst GmbH and upstream maintainers — OPEN
+
+Context. swarmtyp competes with the free tier of typst.app, the product that funds Typst GmbH, and depends on three things other people maintain: the compiler (Typst GmbH, Apache-2.0), typst.ts (one maintainer, D-04) and swarm-collaborative-docs (Solar Punk, D-02). The owner does not want to carry swarmtyp with great effort. Two questions: whether, when and how to approach Typst GmbH; and where support that lowers maintenance can come from.
+
+Contact. Options: (a) now, with the plan; (b) after M1 or M2, with a link they can open; (c) never, rely on the licence. Leaning (b): a plan is a competitor announcing itself, a working editor at a Swarm address is a community project they can point to. Before that, one short forum or Discord post with two concrete questions: is a Swarm mirror of Universe welcome, and is there a preferred path for embedding the compiler in a browser. Say plainly that swarmtyp is not a port of their app. What to ask for, all free to them: a listing on their Tools page, a forum announcement, a word on name and brand use, the package server staying open to cross-origin requests. Do not expect money or code: the web app is what they keep closed. Risk of asking is low; the compiler is Apache-2.0.
+
+Maintenance. Typst GmbH cannot lower it. Three levers can: push features upstream so swarmtyp stays thin (typst.ts: font source, package resolver hook; swarm-collaborative-docs: encryption hook, stamp hook, signer interface; see `competition.md` §6 and dappdata D17–D20); design for standing still (pinned versions, a static bundle at a Swarm address, content that outlives the app, a read-only viewer build); and co-maintainers from where the appetite already is, the server-backed editors in `references.md` and the Swarm side, which is the more plausible source of support than Typst GmbH.
+
+Trademark. "Typst" descriptively, never their logo; the name stays swarmtyp. Read their brand guidelines before the first public post.
+
+Decide before the first public post, after M1 at the earliest.
