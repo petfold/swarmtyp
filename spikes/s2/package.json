@@ -1,0 +1,11 @@
+{
+  "name": "swarmtyp-spike-s2",
+  "private": true,
+  "type": "module",
+  "description": "S2: typst.ts 0.7 shadow filesystem, multi-file, incremental compile (throwaway)",
+  "dependencies": {
+    "@myriaddreamin/typst-ts-renderer": "0.7.0",
+    "@myriaddreamin/typst-ts-web-compiler": "0.7.0",
+    "@myriaddreamin/typst.ts": "0.7.0"
+  }
+}

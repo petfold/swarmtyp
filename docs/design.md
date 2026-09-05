@@ -12,7 +12,7 @@ Non-goals for now: WYSIWYG editing, comments and review workflow, a mobile UI, o
 
 Three things line up.
 
-- The compiler is open-source Rust and runs as WebAssembly in the browser. [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) (v0.7.0, June 2026) ships it as `@myriaddreamin/typst-ts-web-compiler` and `@myriaddreamin/typst-ts-renderer`, roughly 8 MB and 5 MB. Edit → compile → preview needs no server.
+- The compiler is open-source Rust and runs as WebAssembly in the browser. [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) (v0.7.0, June 2026) ships it as `@myriaddreamin/typst-ts-web-compiler` and `@myriaddreamin/typst-ts-renderer`: 28.3 MB and 0.97 MB raw, 10.8 MB and 0.36 MB gzipped (S2). typst.ts 0.7.0 embeds Typst 0.14.2. Edit → compile → preview needs no server.
 - Typst source is plain text. Co-editing is one `Y.Text` CRDT per file, the simplest Yjs case. Solar Punk already has a library that does exactly this over Swarm: `@solarpunkltd/swarm-collaborative-docs`.
 - Swarm serves static apps and mutable pointers. A `bzz` collection hosts the bundle; feeds carry document state; content addresses name every asset.
 
@@ -97,7 +97,7 @@ Y.Doc update (local or remote)
                  diagnostics → editor gutter and a problems panel
 ```
 
-Requests carry a monotonic id; the main thread drops results older than the newest request. Recompiles of unchanged input are cheap because typst memoises internally; whether typst.ts exposes incremental compile across calls is *(spike S2)*. Reference point: typst.app paints a one-page document about 110 ms after the last keystroke (`competition.md` §2.2); S2 uses that as its target.
+Requests carry a monotonic id; the main thread drops results older than the newest request. Recompiles of unchanged input are cheap because typst memoises internally; typst.ts exposes an incremental server whose delta artifacts the renderer merges *(S2: 56 ms and 6.6 KB for a one-word edit in 22 pages)*. Reference point: typst.app paints a one-page document about 110 ms after the last keystroke (`competition.md` §2.2); S2 uses that as its target.
 
 The "world" the compiler sees is a virtual filesystem (typst.ts calls this the shadow filesystem) that swarmtyp fills from the CRDT and from Swarm. Nothing touches a real disk.
 
@@ -150,7 +150,7 @@ Constraints on the bundle:
 - Hash-based routing only; there is no server to rewrite paths.
 - Workers created with module URLs relative to `import.meta.url`.
 - WASM loads through the gateway; if the manifest does not serve `application/wasm`, use `WebAssembly.instantiate` on an ArrayBuffer instead of `instantiateStreaming`. *(spike S1)*
-- First load fetches ~13 MB of WASM plus fonts. Measure it over a gateway and cache aggressively. *(spike S8)*
+- First load fetches ~29 MB of raw WASM plus fonts, and Bee serves bytes as stored, with no content negotiation. Ship the WASM gzipped and inflate it in the browser with `DecompressionStream('gzip')` (10.8 MB on the wire), or zstd with a small decoder (7.6 MB); measure over a gateway and cache aggressively. *(spike S8)*
 - typst.ts's WASM uses no threads, so the page needs no cross-origin isolation. If that changes, a service worker can add the COOP/COEP headers a gateway will not send; typst.app does exactly this.
 
 ### 4.12 Sharing and joining

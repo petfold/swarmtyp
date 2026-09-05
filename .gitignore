@@ -6,3 +6,5 @@ dist/
 *.log
 .DS_Store
 spikes/**/node_modules/
+spikes/s1/site/
+spikes/**/out.pdf

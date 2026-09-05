@@ -1,0 +1,107 @@
+{
+  "env": {
+    "node": "v22.23.2",
+    "typstTs": "0.7.0"
+  },
+  "init": {
+    "wasmBytes": 28325178,
+    "wasmCompileMs": 82,
+    "compilerInitMs": 801,
+    "fontsMs": 13,
+    "fontBytes": 3472844
+  },
+  "coldCompile": {
+    "ms": 544,
+    "artifactBytes": 226504,
+    "errors": 0,
+    "warnings": 0
+  },
+  "queryPages": {
+    "ms": 7,
+    "pages": [
+      22
+    ]
+  },
+  "warmCompileUnchanged": {
+    "ms": 72,
+    "artifactBytes": 226504,
+    "errors": 0,
+    "warnings": 0
+  },
+  "warmCompileOneFileEdited": {
+    "ms": 105,
+    "artifactBytes": 231504,
+    "errors": 0,
+    "warnings": 0
+  },
+  "warmCompileOneWordEdited": {
+    "ms": 127,
+    "artifactBytes": 231800,
+    "errors": 0,
+    "warnings": 0
+  },
+  "incrFirst": {
+    "ms": 77,
+    "artifactBytes": 231820,
+    "errors": 0,
+    "warnings": 0
+  },
+  "incrAfterOneWordEdit": {
+    "ms": 56,
+    "artifactBytes": 6612,
+    "errors": 0,
+    "warnings": 0
+  },
+  "incrDeltaBytes": 6612,
+  "diagnosticsFull": [
+    {
+      "package": "",
+      "path": "/chapters/two.typ",
+      "range": "102:9-102:16",
+      "severity": "error",
+      "message": "cannot add integer and string"
+    },
+    {
+      "package": "",
+      "path": "/main.typ",
+      "range": "7:9-7:28",
+      "severity": "hint",
+      "message": "import"
+    }
+  ],
+  "diagnosticsUnix": [
+    "/chapters/two.typ:103:10: error: cannot add integer and string",
+    "/main.typ:8:10: hint: import"
+  ],
+  "semanticTokens": {
+    "ms": 4,
+    "legendTypes": 21,
+    "legendModifiers": 3,
+    "dataLength": 3160,
+    "tokens": 632,
+    "sampleTypes": [
+      "comment",
+      "string",
+      "keyword",
+      "operator",
+      "number",
+      "function",
+      "decorator",
+      "bool",
+      "punctuation",
+      "escape",
+      "link",
+      "raw"
+    ]
+  },
+  "pdfExport": {
+    "ms": 154,
+    "pdfBytes": 193887,
+    "header": "%PDF-1.7"
+  },
+  "afterUnmapShadow": {
+    "errors": [
+      "failed to load file (access denied), hints: cannot read file outside of project root, you can adjust the project root with the --root argument"
+    ]
+  }
+}
