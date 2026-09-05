@@ -66,7 +66,10 @@ One of: retry the failing chunk (other peers, backoff) before giving up, as Bee 
 
 Fetch in 1 MB `Range` pieces with per-piece retry (swarmtyp `spikes/s1/pages/index.html`, `fetchRanged`). With a fresh Ant inside Freedom (ultra-light, ~117 peers, no local Bee peer) the 10.8 MB file arrived complete in 11 pieces, two in parallel, in 303 s (36 KB/s; single pieces took 14–66 s), and the page then compiled and rendered. Whole-file GETs of the same file on the same node kept truncating until the disk cache held everything.
 
-## Also worth a note (separate, smaller)
+## Also worth a note (separate, smaller) — filed 2026-09-05
+
+- Legacy-mode silent reuse of the Bee on 1633: https://github.com/solardev-xyz/freedom-browser/issues/218
+- No gateway request logging in Ant: https://github.com/freedom-hq/ant/issues/82
 
 - The dev profile finds a Bee on the ecosystem port 1633 and shows "External Nodes Detected"; in legacy profile mode (`FREEDOM_TEST_USER_DATA`) it silently reuses that node without asking. Expected: the same choice in both modes.
 - `--log-level debug` logs retrieval errors but no gateway request lines, so a truncated response cannot be correlated with a request in the log.

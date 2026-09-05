@@ -21,7 +21,7 @@ Outside projects swarmtyp depends on or learns from. Check versions and status b
 
 ## Clients
 
-- **Freedom Browser** — https://github.com/solardev-xyz/freedom-browser (MPL-2.0; checkout at `../freedom-browser`). Electron browser with native `bzz://` (per-hash origin), a bundled Rust Swarm light node (Ant, Bee-shaped API) and a permissioned `window.swarm` provider. Tested with the S1 page on 2026-09-05; see S1 and D-22.
+- **Freedom Browser** — https://github.com/solardev-xyz/freedom-browser (MPL-2.0; checkout at `../freedom-browser`). Electron browser with native `bzz://` (per-hash origin), a bundled Rust Swarm light node (Ant, Bee-shaped API) and a permissioned `window.swarm` provider. Tested with the S1 page on 2026-09-05; see S1 and D-22. Issues filed from that test: `freedom-hq/ant#79` (comment), `freedom-hq/ant#82`, `solardev-xyz/freedom-browser#218`. Ant repository: https://github.com/freedom-hq/ant.
 
 ## Competitor
 
