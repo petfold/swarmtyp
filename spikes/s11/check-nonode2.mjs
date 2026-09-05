@@ -5,7 +5,7 @@ try {
   await ctx.addInitScript(() => localStorage.setItem('swarmtyp:settings', JSON.stringify({ beeUrl: 'http://127.0.0.1:1', stamp: '' })));
   const page = await ctx.newPage(); const reqs = new Map();
   page.on('request', (r) => { if (r.url().includes('download.gateway')) { const k = r.url().slice(-12) + ' ' + (r.headers()['range'] || '-'); reqs.set(k, (reqs.get(k) || 0) + 1); } });
-  page.on('response', (r) => { if (r.url().includes('download.gateway') && reqs.size < 12) console.log('resp', r.status(), r.url().slice(-12), r.headers()['content-range'] || '', r.headers()['content-length'] || ''); });
+  page.on('response', (r) => { if (r.url().includes('download.gateway')) console.log('resp', r.status(), r.url().slice(-12), r.request().headers()['range'] || 'whole', r.headers()['content-length'] || '', r.headers()['cf-cache-status'] || ''); }); page.on('requestfailed', (r) => console.log('FAILED', r.url().slice(-12), r.failure()?.errorText));
   const t0 = Date.now(); await page.goto('http://127.0.0.1:4174/');
   const status = page.locator('.topbar .status').first(); let last = '';
   for (let i = 0; i < 150; i++) { const t = (await status.textContent()) || ''; if (t !== last) { last = t; console.log(`${((Date.now() - t0) / 1000).toFixed(0)}s ${t}`); } if (/compiled in|failed/.test(t)) break; await page.waitForTimeout(1000); }

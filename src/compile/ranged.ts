@@ -7,12 +7,22 @@ export interface RangedProgress { done: number; total: number; pieces: number }
 // fine, so ask for the whole body there. The walkers below also detect a repeated piece from any other host.
 const WHOLE_BODY_HOSTS = ['download.gateway.ethswarm.org'];
 const wholeBody = (url: string) => WHOLE_BODY_HOSTS.some((h) => url.includes(`//${h}/`));
+// A whole-body request to such a host can still be answered from a cache entry that a Range request created (a 206 with
+// the first piece; seen on download.gateway.ethswarm.org). Ask under a cache key of our own, and if a 206 still comes
+// back, once more under a fresh key. Bee ignores unknown query parameters on /bytes and /bzz.
+const wholeUrl = (url: string, fresh = false) => url + (url.includes('?') ? '&' : '?') + 'whole=' + (fresh ? Date.now().toString(36) : '1');
+async function fetchWhole(url: string): Promise<Uint8Array> {
+  let r = await fetch(wholeUrl(url));
+  if (r.status === 206) r = await fetch(wholeUrl(url, true));
+  if (r.status !== 200) throw new Error(`GET ${url}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
 const samePiece = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.length > 0 && a[0] === b[0] && a[a.length - 1] === b[b.length - 1] && a.subarray(0, 64).every((v, i) => v === b[i]) && a.subarray(a.length >> 1, (a.length >> 1) + 64).every((v, i) => v === b[(a.length >> 1) + i]);
 
 export async function fetchRanged(url: string, opts: { piece?: number; parallel?: number; onProgress?: (p: RangedProgress) => void } = {}): Promise<Uint8Array> {
   const piece = opts.piece ?? 1 << 20;
   const parallel = opts.parallel ?? 2;
-  if (wholeBody(url)) { const r = await fetch(url); if (!r.ok) throw new Error(`GET ${url}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); }
+  if (wholeBody(url)) return fetchWhole(url);
   const first = await fetch(url, { headers: { Range: `bytes=0-${piece - 1}` } });
   if (first.status === 200) return new Uint8Array(await first.arrayBuffer()); // no range support: the whole body came back
   if (first.status !== 206) throw new Error(`GET ${url}: ${first.status}`);
@@ -26,7 +36,7 @@ export async function fetchRanged(url: string, opts: { piece?: number; parallel?
       if (r.status === 416) break;
       if (r.status !== 206) throw new Error(`GET ${url} piece at ${got}: ${r.status}`);
       const b = new Uint8Array(await r.arrayBuffer());
-      if (samePiece(b, parts[parts.length - 1])) { const whole = await fetch(url); if (!whole.ok) throw new Error(`GET ${url}: ${whole.status}`); return new Uint8Array(await whole.arrayBuffer()); } // server ignored the offset
+      if (samePiece(b, parts[parts.length - 1])) return fetchWhole(url); // server ignored the offset
       parts.push(b); got += b.length;
       opts.onProgress?.({ done: got, total: 0, pieces: parts.length });
       if (b.length === 0) break;
@@ -75,7 +85,8 @@ export function syncGetRanged(url: string, piece = 1 << 20): Uint8Array {
     if (xhr.status !== 200 && xhr.status !== 206 && xhr.status !== 416) throw new Error(`GET ${url} ${range}: ${xhr.status}`);
     return { status: xhr.status, total: Number(xhr.getResponseHeader('Content-Range')?.split('/')[1]), bytes: xhr.status === 416 ? new Uint8Array() : Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)) };
   };
-  const whole = () => { const xhr = new XMLHttpRequest(); xhr.overrideMimeType('text/plain; charset=x-user-defined'); xhr.open('GET', url, false); xhr.send(null); if (xhr.status !== 200) throw new Error(`GET ${url}: ${xhr.status}`); return Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)); };
+  const wholeOnce = (u: string) => { const xhr = new XMLHttpRequest(); xhr.overrideMimeType('text/plain; charset=x-user-defined'); xhr.open('GET', u, false); xhr.send(null); return xhr; };
+  const whole = () => { let xhr = wholeOnce(wholeUrl(url)); if (xhr.status === 206) xhr = wholeOnce(wholeUrl(url, true)); if (xhr.status !== 200) throw new Error(`GET ${url}: ${xhr.status}`); return Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)); };
   if (wholeBody(url)) return whole();
   const first = get(`bytes=0-${piece - 1}`);
   if (first.status === 200) return first.bytes; // no range support: whole body came back

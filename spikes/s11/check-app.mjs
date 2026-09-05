@@ -8,6 +8,6 @@ await page.goto(url, { waitUntil: 'load', timeout: 180000 });
 const status = page.locator('.topbar .status').first();
 let last = ''; const marks = [];
 for (let i = 0; i < 180; i++) { const t = (await status.textContent().catch(() => '')) || ''; if (t !== last) { last = t; marks.push(`${((Date.now() - t0) / 1000).toFixed(0)}s ${t}`); } if (/compiled in|failed/.test(t)) break; await page.waitForTimeout(1000); }
-const info = await page.evaluate(() => ({ origin: location.origin, pages: document.querySelectorAll('.preview canvas').length, packages: document.querySelector('.packages')?.textContent?.slice(0, 80) }));
+const info = await page.evaluate(() => ({ origin: location.origin, pages: document.querySelectorAll('.preview canvas').length, packages: document.querySelector('.packages')?.textContent?.slice(0, 120), problems: [...document.querySelectorAll('.problems li')].map((e) => e.textContent?.slice(0, 200)) }));
 await page.screenshot({ path: 'spikes/s11/app-gateway.png' });
 console.log(JSON.stringify({ url, seconds: ((Date.now() - t0) / 1000).toFixed(1), mb: (bytes / 1048576).toFixed(1), ...info, marks: marks.slice(-6), failed: failed.slice(0, 10) }, null, 1)); await browser.close();
