@@ -15,7 +15,7 @@ const flushPara = (buf) => { if (buf.length) out.push(`<p>${inline(buf.join(' ')
 const para = [];
 while (i < lines.length) {
   const l = lines[i];
-  if (/^```/.test(l)) { flushPara(para); const code = []; i++; while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]); i++; out.push(`<pre><code>${esc(code.join('\n'))}</code></pre>`); continue; }
+  if (/^\s*```/.test(l)) { flushPara(para); const code = []; i++; while (i < lines.length && !/^\s*```/.test(lines[i])) code.push(lines[i++].replace(/^\s{2}/, '')); i++; out.push(`<pre><code>${esc(code.join('\n'))}</code></pre>`); continue; }
   const h = /^(#{1,4})\s+(.*)$/.exec(l);
   if (h) { flushPara(para); const level = h[1].length; if (level === 1) title = h[2]; const id = h[2].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); out.push(`<h${level} id="${id}">${inline(h[2])}</h${level}>`); i++; continue; }
   if (/^\|/.test(l)) { flushPara(para); const rows = []; while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]); const cells = (r) => r.replace(/^\||\|$/g, '').split('|').map((c) => c.trim()); const body = rows.filter((r) => !/^\|\s*-{2,}/.test(r)); out.push(`<table><thead><tr>${cells(body[0]).map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${body.slice(1).map((r) => `<tr>${cells(r).map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`); continue; }
@@ -25,11 +25,13 @@ while (i < lines.length) {
     while (i < lines.length) {
       const m = /^(\s*)([-*]|\d+\.)\s+(.*)$/.exec(lines[i]);
       if (m && m[1].length === li[1].length) { items.push(m[3]); i++; }
-      else if (lines[i].trim() && /^\s{2,}/.test(lines[i]) && !/^\s*```/.test(lines[i]) && items.length) { items[items.length - 1] += ' ' + lines[i].trim(); i++; }
+      else if (lines[i].trim() && /^\s{2,}/.test(lines[i]) && !/^\s*```/.test(lines[i]) && items.length) { items[items.length - 1] += (items[items.length - 1].endsWith('</pre>') ? '<br>' : ' ') + lines[i].trim(); i++; }
       else if (/^\s*```/.test(lines[i]) && items.length) { const code = []; i++; while (i < lines.length && !/^\s*```/.test(lines[i])) code.push(lines[i++].replace(/^\s{2}/, '')); i++; items[items.length - 1] += `<pre><code>${esc(code.join('\n'))}</code></pre>`; }
+      else if (!lines[i].trim() && i + 1 < lines.length && /^\s{2,}\S/.test(lines[i + 1]) && items.length) { i++; } // blank line inside an indented item
       else break;
     }
-    out.push(`<${ordered ? 'ol' : 'ul'}>${items.map((t) => `<li>${inline(t.replace(/<pre>[\s\S]*<\/pre>/, ''))}${(t.match(/<pre>[\s\S]*<\/pre>/) || [''])[0]}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`);
+    const render = (t) => t.split(/(<pre>[\s\S]*?<\/pre>)/).map((part) => part.startsWith('<pre>') ? part : inline(part).replace(/&lt;br&gt;/g, '<br>')).join('');
+    out.push(`<${ordered ? 'ol' : 'ul'}>${items.map((t) => `<li>${render(t)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`);
     continue;
   }
   if (!l.trim()) { flushPara(para); i++; continue; }
