@@ -27,6 +27,8 @@ async function open(browser: Browser, nickname: string, url = './') {
 }
 const editor = (page: Page) => page.locator('.editor-host');
 const text = (page: Page) => editor(page).evaluate((el) => (el as HTMLElement & { cmView: { state: { doc: { toString(): string } } } }).cmView.state.doc.toString());
+// CodeMirror renders decorations for the visible viewport only, so scroll to the end before looking for a remote caret.
+const scrollToEnd = (page: Page) => editor(page).evaluate((el) => { const v = (el as HTMLElement & { cmView: { scrollDOM: HTMLElement } }).cmView; v.scrollDOM.scrollTop = v.scrollDOM.scrollHeight; });
 async function typeAtEnd(page: Page, s: string) {
   await page.locator('.cm-content').click();
   await page.keyboard.press('Control+End');
@@ -44,8 +46,8 @@ test('two people edit one project, see each other, and lose nothing on reload', 
   const bob = await open(browser, 'Bob', link);
   await expect(bob.page.locator('.member', { hasText: 'Alice' })).toBeVisible({ timeout: 120_000 });
   await expect(alice.page.locator('.member', { hasText: 'Bob' })).toBeVisible({ timeout: 120_000 });
-  expect(await text(bob.page)).toContain('Hello from swarmtyp'); // Alice's document arrived, not a fresh starter
-  expect((await text(bob.page)).split('Hello from swarmtyp').length).toBe(2); // and exactly once (no double init)
+  expect(await text(bob.page)).toContain('Typst in the browser, documents on Swarm'); // Alice's document arrived, not a fresh starter
+  expect((await text(bob.page)).split('Typst in the browser, documents on Swarm').length).toBe(2); // and exactly once (no double init)
   // Edits made before the direct channel opens travel only as feed snapshots, which peers fetch once at join
   // (docs/upstream/swarm-collaborative-docs.md §11); type once the chips show a live connection.
   // Offer and answer travel through signal feeds (5 s poll, seconds of feed latency each way); Firefox drops an ICE
@@ -55,10 +57,12 @@ test('two people edit one project, see each other, and lose nothing on reload', 
 
   await typeAtEnd(bob.page, '\n== Bob was here\n');
   await expect.poll(() => text(alice.page), { timeout: 120_000 }).toContain('Bob was here');
+  await scrollToEnd(alice.page);
   await expect(alice.page.locator('.remote-caret-label', { hasText: 'Bob' })).toBeVisible();
 
   await typeAtEnd(alice.page, '\n== Alice too\n');
   await expect.poll(() => text(bob.page), { timeout: 120_000 }).toContain('Alice too');
+  await scrollToEnd(bob.page);
   await expect(bob.page.locator('.remote-caret-label', { hasText: 'Alice' })).toBeVisible();
   await expect(alice.page.locator('.topbar .status')).toHaveText(/compiled in \d+ ms/);
 
@@ -76,7 +80,7 @@ test('two people edit one project, see each other, and lose nothing on reload', 
   const carol = await open(browser, 'Carol', link);
   await expect.poll(() => text(carol.page), { timeout: 120_000 }).toContain('Bob was here');
   expect(await text(carol.page)).toContain('Alice too');
-  expect((await text(carol.page)).split('Hello from swarmtyp').length).toBe(2);
+  expect((await text(carol.page)).split('Typst in the browser, documents on Swarm').length).toBe(2);
 
   // Leave: Bob's copy on this device goes, the project stays on Swarm (D-19). The confirm() is accepted by the dialog handler.
   const dbName = `swarmtyp:${/#\/p\/([0-9a-f]{64})/.exec(link)![1]}`;

@@ -13,8 +13,9 @@ test('compiles the starter document, shows an error in the gutter, adds a second
   await page.goto('./');
   const status = page.locator('.topbar .status').first();
   await expect(status).toHaveText(/compiled in \d+ ms/, { timeout: 90_000 });
-  await expect(page.locator('.preview canvas')).toHaveCount(1);
-  await expect(page.locator('.packages')).toContainText('oxifmt');
+  await expect(page.locator('.preview canvas')).toHaveCount(2); // the starter is two pages
+  await expect(page.locator('.packages')).toContainText('cetz');
+  await expect(page.locator('.problems li')).toHaveCount(0);
 
   // A second text file included from main.
   page.once('dialog', (d) => d.accept('chapters/two.typ'));

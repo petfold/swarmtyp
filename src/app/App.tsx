@@ -13,19 +13,8 @@ import { createGenesis } from '../collab/genesis';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { Preview } from './Preview';
 
-const STARTER = `#set page(paper: "a4")
-#set text(size: 11pt)
-
-= Hello from swarmtyp
-
-Typst, compiled in your browser, living on Swarm. Edit on the left; the preview follows.
-The default fonts (Libertinus Serif, New Computer Modern Math, DejaVu Sans Mono) load from Swarm as the document needs them.
-
-$ integral_0^1 x^2 dif x = 1/3 $
-
-#import "@preview/oxifmt:1.0.0": strfmt
-Packages come from the Swarm mirror when they are on it: #strfmt("{:04}", 42). \`raw text\` uses the mono face.
-`;
+// The starting document (docs/user-guide.md §2) lives in starter.typ so it can be edited as Typst.
+import STARTER from './starter.typ?raw';
 
 function useForceUpdate() { const [, set] = useState(0); return useCallback(() => set((n) => n + 1), []); }
 

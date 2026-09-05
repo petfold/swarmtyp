@@ -38,17 +38,19 @@ The status bar at the top says what is happening: `loading compiler 48%`, then `
 
 ## 2. The demo document
 
-On first open you get "My first document", one file `main.typ`, and the preview on the right shows what the demo exercises:
+On first open you get "My first document", one file `main.typ`, two pages that describe swarmtyp itself, and the preview on the right shows what the demo exercises:
 
-- **Text and a heading** set in Libertinus Serif, the Typst default, fetched from Swarm the moment the document needs it.
-- **An equation** set in New Computer Modern Math, another lazy font; the maths face is 1.4 MB and loads only because the document has an equation.
-- **A package import**, `@preview/oxifmt`, served from swarmtyp's mirror on Swarm. The Problems panel lists which packages the document used and where each came from.
+- **Text and headings** set in Libertinus Serif, the Typst default, fetched from Swarm the moment the document needs it.
+- **Two diagrams drawn with the `cetz` package** (Typst's TikZ-like drawing library) in a pastel palette defined at the top of the file: how your browser, a collaborator's browser, Swarm and the app itself fit together, and how two concurrent edits merge into one result. `cetz` and its dependency `oxifmt` come from swarmtyp's mirror on Swarm; the Problems panel lists which packages the document used and where each came from.
+- **Equations** set in New Computer Modern Math, another lazy font: Swarm's content addressing, the capacity of a postage batch, the CRDT merge laws, and a few classics. The maths face is 1.4 MB and loads only because the document has equations.
 - **Raw text** in DejaVu Sans Mono.
+
+The source is `src/app/starter.typ` in the repository; changing a colour at the top of the file recolours both diagrams.
 
 Things to try, in order:
 
 1. Type anywhere. The preview recompiles about 200 ms after you stop typing; the status bar shows the compile time.
-2. Break something: write `#let x = 1 + "a"`. The error is underlined in the editor, listed in Problems at the bottom left with its line, and the status bar counts it. Fix it and it disappears.
+2. Change a colour at the top, for example `#let sky = rgb("#ffd6a5")`, and watch the diagrams follow. Break something: write `#let x = 1 + "a"`. The error is underlined in the editor, listed in Problems at the bottom left with its line, and the status bar counts it. Fix it and it disappears.
 3. Add a file with the `+` button in the Files panel, for example `chapters/two.typ`, write a heading in it, go back to `main.typ` and add `#include "chapters/two.typ"`.
 4. Upload an image with the `↑` button (needs a postage batch, see Settings). It appears in Files marked `◆`; use it with `#image("logo.png", width: 3cm)`.
 5. Export PDF. The file is produced in your browser and saved by it.
