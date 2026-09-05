@@ -5,19 +5,30 @@ export interface RangedProgress { done: number; total: number; pieces: number }
 export async function fetchRanged(url: string, opts: { piece?: number; parallel?: number; onProgress?: (p: RangedProgress) => void } = {}): Promise<Uint8Array> {
   const piece = opts.piece ?? 1 << 20;
   const parallel = opts.parallel ?? 2;
-  const head = await fetch(url, { headers: { Range: 'bytes=0-0' } });
-  if (head.status !== 206) {
-    // No range support: fall back to a plain GET.
-    const res = head.status === 200 ? head : await fetch(url);
-    if (!res.ok) throw new Error(`GET ${url}: ${res.status}`);
-    return new Uint8Array(await res.arrayBuffer());
+  const first = await fetch(url, { headers: { Range: `bytes=0-${piece - 1}` } });
+  if (first.status === 200) return new Uint8Array(await first.arrayBuffer()); // no range support: the whole body came back
+  if (first.status !== 206) throw new Error(`GET ${url}: ${first.status}`);
+  const firstBytes = new Uint8Array(await first.arrayBuffer());
+  const total = Number(first.headers.get('content-range')?.split('/')[1]);
+  if (!total) {
+    // Cross-origin without Access-Control-Expose-Headers: Content-Range is hidden. Walk pieces until a short one.
+    const parts: Uint8Array[] = [firstBytes]; let got = firstBytes.length;
+    while (parts[parts.length - 1].length === piece) {
+      const r = await fetch(url, { headers: { Range: `bytes=${got}-${got + piece - 1}` } });
+      if (r.status === 416) break;
+      if (r.status !== 206) throw new Error(`GET ${url} piece at ${got}: ${r.status}`);
+      const b = new Uint8Array(await r.arrayBuffer()); parts.push(b); got += b.length;
+      opts.onProgress?.({ done: got, total: 0, pieces: parts.length });
+      if (b.length === 0) break;
+    }
+    const out = new Uint8Array(got); let o = 0; for (const b of parts) { out.set(b, o); o += b.length; }
+    return out;
   }
-  const total = Number(head.headers.get('content-range')?.split('/')[1]);
-  if (!total) throw new Error(`no Content-Range total for ${url}`);
-  const out = new Uint8Array(total);
+  const out = new Uint8Array(total); out.set(firstBytes, 0);
   const offsets: number[] = [];
-  for (let o = 0; o < total; o += piece) offsets.push(o);
-  let next = 0, done = 0, pieces = 0;
+  for (let o = firstBytes.length; o < total; o += piece) offsets.push(o);
+  let next = 0, done = firstBytes.length, pieces = 1;
+  opts.onProgress?.({ done, total, pieces });
   const worker = async () => {
     while (next < offsets.length) {
       const o = offsets[next++]; const end = Math.min(o + piece, total) - 1;
@@ -51,16 +62,20 @@ export function syncGetRanged(url: string, piece = 1 << 20): Uint8Array {
     const xhr = new XMLHttpRequest();
     xhr.overrideMimeType('text/plain; charset=x-user-defined');
     xhr.open('GET', url, false); xhr.setRequestHeader('Range', range); xhr.send(null);
-    if (xhr.status !== 200 && xhr.status !== 206) throw new Error(`GET ${url} ${range}: ${xhr.status}`);
-    return { status: xhr.status, total: Number(xhr.getResponseHeader('Content-Range')?.split('/')[1]), bytes: Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)) };
+    if (xhr.status !== 200 && xhr.status !== 206 && xhr.status !== 416) throw new Error(`GET ${url} ${range}: ${xhr.status}`);
+    return { status: xhr.status, total: Number(xhr.getResponseHeader('Content-Range')?.split('/')[1]), bytes: xhr.status === 416 ? new Uint8Array() : Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)) };
   };
   const first = get(`bytes=0-${piece - 1}`);
-  if (first.status === 200 || !first.total) return first.bytes; // no range support: whole body came back
-  const out = new Uint8Array(first.total); out.set(first.bytes, 0);
-  for (let o = first.bytes.length; o < first.total; o += piece) {
-    const end = Math.min(o + piece, first.total) - 1;
-    let tries = 0;
-    for (;;) { try { const r = get(`bytes=${o}-${end}`); if (r.bytes.length !== end - o + 1) throw new Error(`short piece ${r.bytes.length}`); out.set(r.bytes, o); break; } catch (e) { if (++tries > 5) throw e; } }
+  if (first.status === 200) return first.bytes; // no range support: whole body came back
+  const parts: Uint8Array[] = [first.bytes]; let got = first.bytes.length;
+  // Known total: fetch the rest; unknown total (Content-Range hidden cross-origin): walk until a short piece.
+  while (first.total ? got < first.total : parts[parts.length - 1].length === piece) {
+    const end = first.total ? Math.min(got + piece, first.total) - 1 : got + piece - 1;
+    let tries = 0, b: Uint8Array;
+    for (;;) { try { const r = get(`bytes=${got}-${end}`); if (first.total && r.bytes.length !== end - got + 1) throw new Error(`short piece ${r.bytes.length}`); b = r.bytes; break; } catch (e) { if (++tries > 5) throw e; } }
+    parts.push(b); got += b.length;
+    if (b.length === 0) break;
   }
+  const out = new Uint8Array(got); let o = 0; for (const b of parts) { out.set(b, o); o += b.length; }
   return out;
 }
