@@ -105,3 +105,36 @@ Free forever by construction: no account, no sign-up gate on sharing, multi-file
 ## 8. Their web-app roadmap (as published 2026-09-05)
 
 Items that overlap with swarmtyp's plan or would erode its differentiation if shipped: offline PWA, version history, change tracking, chat-like comments, Git integration, private packages in teams, presentation mode (shipped), compiler version picker (shipped), spell check (shipped). Version history is the one to watch: swarmtyp gets it from immutable snapshots for free and should surface it early.
+
+## 9. Feature parity target
+
+What "familiar to a Typst user" means for swarmtyp, and when each item lands. Behaviour, menu structure and shortcuts match typst.app because users have them in their fingers; the visual design, icons, copy and layout are our own (D-18). Items marked *check* depend on what typst.ts exposes and are answered in the spikes.
+
+**Phase 1, solo editor (M1)**
+
+- Split editor and preview, preview updates while typing; editor-only and preview-only views; zoom in, zoom out, fit to width, fit to page; scroll preview to the cursor.
+- File panel: new file (Shift-Ctrl-N), upload (Ctrl-O), rename (F2), delete; choose the previewed file (the eye icon); text files (`.typ`, `.bib`, `.csv`, `.json`, `.yaml`, `.svg`) editable, other files shown as blobs.
+- Editor: Typst highlighting, line numbers, wrapping, folding, undo and redo, search and replace (Ctrl-F), go to line (Ctrl-G), line comment (Ctrl-/), block comment (Ctrl-Shift-A); toolbar for bold, italic, underline, heading level, list, enumeration, maths, code block, reference.
+- Diagnostics: errors and warnings in the gutter and in a problems panel, with the compiler's hints; a visible compiling indicator (T13).
+- Autocomplete and hover for functions and parameters: *check* in S2 whether typst.ts exposes the compiler's IDE features; Phase 1 if yes, later if not.
+- Export: quick PDF (Shift-Ctrl-S); export as PDF, PNG and SVG with per-format settings; download the project as a ZIP.
+- Fonts: the default set from Swarm (S4); a font picker listing the faces available to the document.
+- Packages: `@preview` imports resolve (S3, D-08); the source of each package visible in the UI.
+- Settings: the compiler version the project was last compiled with (`typstVersion`); editor font size and wrapping.
+- Help: the tutorial and the reference one keystroke away (F1), linking to the public docs until a Swarm-hosted copy exists.
+
+**Phase 2, collaboration (M2)**
+
+- The share link is the project id; collaborator cursors with a toggle; a member list showing short addresses next to names (T2); reload without loss (D-19).
+
+**Phase 3 (M3)**
+
+- A project list (dappdata); start from a Universe template through the mirror; publish to a stable link; source-to-preview jumping; outline panel.
+
+**Later, if wanted**
+
+- Comments and suggestions, presentation and speaker mode, spellcheck, version history over snapshots, HTML export while the compiler marks it experimental, colour-blindness simulation, Vim mode, preview in a popup window.
+
+**Not planned, needs a server (D-05)**
+
+- File conversion from LaTeX, Word, Markdown and ODT; Git, Zotero and Mendeley sync; email invites; teams and quotas.
