@@ -1,6 +1,12 @@
 # Upstream issues for typst.ts (drafts)
 
-Target: https://github.com/Myriad-Dreamin/typst.ts (single maintainer; be concise, include a runnable reproduction). Evidence from spikes S1, S2, S4, S10 on 2026-09-05 with `@myriaddreamin/typst.ts`, `typst-ts-web-compiler` and `typst-ts-renderer` 0.7.0 (Typst 0.14.2), Chromium and Node 22. `v0.8.0-rc3` exists; re-check each item against it before filing. Existing threads to comment on instead of opening new issues: #832 (query), #763 and #634 (fonts on demand).
+Target: https://github.com/Myriad-Dreamin/typst.ts (single maintainer; be concise, include a runnable reproduction). Evidence from spikes S1, S2, S4, S10 on 2026-09-05 with `@myriaddreamin/typst.ts`, `typst-ts-web-compiler` and `typst-ts-renderer` 0.7.0 (Typst 0.14.2), Chromium and Node 22. Re-checked against `v0.8.0-rc3` on 2026-09-05 (compiler embeds Typst 0.15.0): item 1 reproduces with a precise panic (`canvas.rs:32`), items 3, 4, 6, 7 unchanged, item 2 (`loadFonts` in `beforeBuild`) is fixed in rc3 and was not filed. Filed the same day:
+
+- Issue 1 → https://github.com/Myriad-Dreamin/typst.ts/issues/888
+- Issue 4 → https://github.com/Myriad-Dreamin/typst.ts/issues/889
+- Issues 6 and 7 plus the `loadFontSync` export → https://github.com/Myriad-Dreamin/typst.ts/issues/890 (one docs issue)
+- Issue 3 → comment on #832: https://github.com/Myriad-Dreamin/typst.ts/issues/832#issuecomment-5551091516
+- Issue 5 → comments on #634 and #763: https://github.com/Myriad-Dreamin/typst.ts/issues/634#issuecomment-5551091981, https://github.com/Myriad-Dreamin/typst.ts/issues/763#issuecomment-5551092071
 
 ---
 
@@ -24,7 +30,7 @@ await renderer.runWithSession(async (session) => {
 
 ---
 
-## 2. `loadFonts` in `beforeBuild` no longer affects the compiler in 0.7
+## 2. `loadFonts` in `beforeBuild` no longer affects the compiler in 0.7 (not filed: fixed in 0.8.0-rc3)
 
 **Steps.** `createTypstCompiler().init({ getModule, beforeBuild: [loadFonts([bytesOfDejaVuSerif])] })`, then compile a document that sets `font: "DejaVu Serif"`.
 
