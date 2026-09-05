@@ -94,7 +94,7 @@ Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/15
 
 ## 11. Edits made before the channel opens can be missed; no way to flush
 
-Not filed yet (2026-09-05, observed in swarmtyp's two-context Playwright test against Bee 2.8.2, master adcb7d5).
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/16 (2026-09-05, observed in swarmtyp's two-context Playwright test against Bee 2.8.2, master adcb7d5).
 
 - A member's snapshot feed is read once, when the member is first seen (`fetchLatestFromMember` from the member poll or the join notification). If the member writes a newer snapshot before the WebRTC channel opens (here about 30 s after joining), nobody fetches it; later deltas over the channel are applied by index without filling the gap, so Yjs holds them pending. In one run the full-state exchange in `setupDataChannel` reached only one side (the initiator received nothing; the answerer received 1244 B), so the gap was never closed. In the next runs the exchange was two-way. Suggested: re-read the member's feed when the channel opens, or exchange state vectors (`Y.encodeStateVector` → `Y.encodeStateAsUpdate(doc, sv)`) on open instead of a one-shot full state, which also cuts the payload.
 - Without a channel there is no convergence after join: a member's feed is never re-read while the session runs, so if ICE fails (Firefox gave up after about 30 s of checking while the answer took 43 s to arrive through the signal feed; the library then re-offered) the peers stay on each other's join-time snapshot until one reloads. Suggested: poll known members' feeds at a slow interval while their connection state is not `connected`, or re-fetch on `PEER_STATE_UPDATED` transitions.
@@ -105,4 +105,6 @@ Not filed yet (2026-09-05, observed in swarmtyp's two-context Playwright test ag
 
 ## 12. Cursor payload has no file path
 
-Not filed yet. `updateCursor({ anchor, head })` carries positions only. In a multi-file document a peer's caret in `chapters/two.typ` is drawn at the same offsets in whatever file the receiver has open. Suggested: an optional `scope`/`path` string in `CursorPosition`, passed through untouched, or a free-form `meta` object on awareness state.
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/17
+
+`updateCursor({ anchor, head })` carries positions only. In a multi-file document a peer's caret in `chapters/two.typ` is drawn at the same offsets in whatever file the receiver has open. Suggested: an optional `scope`/`path` string in `CursorPosition`, passed through untouched, or a free-form `meta` object on awareness state.
