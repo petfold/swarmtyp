@@ -33,7 +33,7 @@ Phase 1 (solo editor, M1) started 2026-09-05; Phase 0 results in `docs/spikes.md
 
 TypeScript · Vite (`base: './'`, hash routing) · React · CodeMirror 6 + `y-codemirror.next` · Yjs · typst.ts 0.7.x (`@myriaddreamin/typst.ts`, `typst-ts-web-compiler`, `typst-ts-renderer`) in a Web Worker · `@ethersphere/bee-js` 12.x against Bee 2.8.x · `@solarpunkltd/swarm-collaborative-docs` with `createSwarmRtcTransport` · Vitest for logic · Playwright for two-browser collaboration tests against a Bee Factory network.
 
-## Layout (once code exists)
+## Layout
 
 ```
 src/app      shell, routing, settings        src/compile  worker, shadow FS, packages, fonts, render
@@ -44,11 +44,13 @@ tools/deploy build → upload → feed           tools/mirror typst/packages →
 e2e/         Playwright                      spikes/      throwaway Phase 0 code (delete when done)
 ```
 
-## Local development (to be filled in during Phase 0)
+## Local development
 
-- A Bee 2.8.x light node with CORS allowing the dev origin, or a Bee Factory network.
-- An immutable postage batch on that node.
-- `.env.local` with `VITE_BEE_URL` and `VITE_STAMP`; never commit stamps or keys.
+- A Bee 2.8.x light node with CORS allowing the dev origin (Swarm Desktop's node on `http://127.0.0.1:1633` does by default), plus an immutable postage batch on it for uploads.
+- `.env.local` with `VITE_BEE_URL` and `VITE_STAMP` (see `.env.example`); never commit stamps or keys.
+- `pnpm install`, then `pnpm dev` (http://127.0.0.1:5174), `pnpm test`, `pnpm build` (runs `tools/build-assets.mjs`, which gzips the compiler WASM into `public/wasm/compiler.wasm.bin`, then type-checks and bundles), `pnpm release` (uploads `dist/` as a collection and prints the reference).
+- Large assets are fetched in 1 MB ranges (`src/compile/ranged.ts`); keep it that way, Freedom's Ant truncates whole bodies.
+- Fonts come from `src/compile/fonts-index.json` (faces on Swarm by reference); rebuild it with the S4 script when the font set changes.
 
 ## Related Solar Punk work
 
