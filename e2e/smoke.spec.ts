@@ -13,7 +13,7 @@ test('compiles the starter document, shows an error in the gutter, adds a second
   await page.goto('./');
   const status = page.locator('.topbar .status').first();
   await expect(status).toHaveText(/compiled in \d+ ms/, { timeout: 90_000 });
-  await expect(page.locator('.preview canvas')).toHaveCount(2); // the starter is two pages
+  await expect(page.locator('.preview canvas')).toHaveCount(2); // the starter's page count
   await expect(page.locator('.packages')).toContainText('cetz');
   await expect(page.locator('.problems li')).toHaveCount(0);
 
