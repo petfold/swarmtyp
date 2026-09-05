@@ -2,19 +2,10 @@
 // The compile worker: typst.ts compiler with a shadow filesystem filled from the CRDT texts and from Swarm blobs,
 // lazy fonts and packages from Swarm (design §4.4–4.7). Typst content is untrusted but runs inside the WASM sandbox.
 import { createTypstCompiler, createTypstFontBuilder, MemoryAccessModel, initOptions } from '@myriaddreamin/typst.ts';
-import { loadFontSync } from '@myriaddreamin/typst.ts/dist/esm/init.mjs';
-import { fetchRanged, gunzip } from './ranged';
+import { fetchRanged, gunzip, syncGetRanged } from './ranged';
 import type { Diagnostic, FromWorker, PackageIndex, ToWorker } from './protocol';
 
 const post = (m: FromWorker, transfer?: Transferable[]) => (self as unknown as Worker).postMessage(m, transfer ?? []);
-
-function syncGet(url: string): Uint8Array {
-  const xhr = new XMLHttpRequest();
-  xhr.overrideMimeType('text/plain; charset=x-user-defined');
-  xhr.open('GET', url, false); xhr.send(null);
-  if (xhr.status !== 200) throw new Error(`GET ${url} -> ${xhr.status}`);
-  return Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0));
-}
 
 /** Packages: the mirror index first (Swarm), then packages.typst.org if allowed (D-08). Resolution is synchronous (S3). */
 class SwarmPackageRegistry {
@@ -26,8 +17,8 @@ class SwarmPackageRegistry {
     const hit = this.cache.get(key); if (hit) return hit;
     let data: Uint8Array, source: string;
     try {
-      if (this.index[key]) { source = 'swarm'; data = syncGet(`${this.beeUrl}/bytes/${this.index[key]}`); }
-      else if (this.allowFallback && spec.namespace === 'preview') { source = 'packages.typst.org'; data = syncGet(`https://packages.typst.org/preview/${spec.name}-${spec.version}.tar.gz`); }
+      if (this.index[key]) { source = 'swarm'; data = syncGetRanged(`${this.beeUrl}/bytes/${this.index[key]}`); }
+      else if (this.allowFallback && spec.namespace === 'preview') { source = 'packages.typst.org'; data = syncGetRanged(`https://packages.typst.org/preview/${spec.name}-${spec.version}.tar.gz`); }
       else return undefined;
     } catch { return undefined; }
     const dir = `/@memory/swarm/packages/${key}`;
@@ -56,7 +47,7 @@ async function init(m: Extract<ToWorker, { type: 'init' }>) {
   post({ type: 'progress', stage: 'fonts' });
   const fb = createTypstFontBuilder();
   await fb.init({ getModule: () => wasm });
-  for (const e of m.fontIndex) await fb.addLazyFont(e.info as never, loadFontSync({ info: e.info, url: `${m.beeUrl}/bytes/${e.ref}` }));
+  for (const e of m.fontIndex) { const url = `${m.beeUrl}/bytes/${e.ref}`; await fb.addLazyFont(e.info as never, () => syncGetRanged(url)); }
   await fb.build(async (r) => c.setFonts(r));
   compiler = c;
   post({ type: 'ready', ms: Math.round(performance.now() - t0) });
@@ -70,7 +61,7 @@ async function compile(m: Extract<ToWorker, { type: 'compile' }>) {
   const wanted = new Set(Object.keys(m.blobs));
   await Promise.all(Object.entries(m.blobs).map(async ([path, ref]) => {
     let bytes = blobCache.get(ref);
-    if (!bytes) { const r = await fetch(`${beeUrl}/bytes/${ref}`); if (!r.ok) return; bytes = new Uint8Array(await r.arrayBuffer()); blobCache.set(ref, bytes); }
+    if (!bytes) { try { bytes = await fetchRanged(`${beeUrl}/bytes/${ref}`); } catch { return; } blobCache.set(ref, bytes); }
     compiler!.mapShadow(path, bytes); shadowed.add(path);
   }));
   for (const path of shadowed) if (!wanted.has(path)) { compiler.unmapShadow(path); shadowed.delete(path); }

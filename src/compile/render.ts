@@ -2,6 +2,7 @@
 // (an element panics the renderer, typst.ts #888; renderToCanvas waits for frames, #889).
 import { createTypstRenderer, type RenderSession, type TypstRenderer } from '@myriaddreamin/typst.ts';
 import rendererWasmUrl from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url';
+import { fetchRanged } from './ranged';
 
 export interface PageInfo { pageOffset: number; width: number; height: number }
 
@@ -13,7 +14,9 @@ export class PageRenderer {
 
   async init() {
     const r = createTypstRenderer();
-    await r.init({ getModule: () => new URL(rendererWasmUrl, document.baseURI).href, beforeBuild: [] });
+    // Ranged fetch + compile: a whole-body fetch of the 1 MB renderer is truncated by Freedom's Ant (S1).
+    const wasm = await WebAssembly.compile((await fetchRanged(new URL(rendererWasmUrl, document.baseURI).href)) as BufferSource);
+    await r.init({ getModule: () => wasm, beforeBuild: [] });
     this.renderer = r;
     // Keep one session alive for the lifetime of the renderer (runWithSession frees it when the callback returns).
     await new Promise<void>((resolve) => {

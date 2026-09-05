@@ -44,3 +44,23 @@ export async function gunzip(bytes: Uint8Array): Promise<Uint8Array> {
   const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream('gzip'));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
+
+/** Synchronous ranged GET for workers (typst.ts resolves fonts and packages synchronously, S2/S3). */
+export function syncGetRanged(url: string, piece = 1 << 20): Uint8Array {
+  const get = (range: string) => {
+    const xhr = new XMLHttpRequest();
+    xhr.overrideMimeType('text/plain; charset=x-user-defined');
+    xhr.open('GET', url, false); xhr.setRequestHeader('Range', range); xhr.send(null);
+    if (xhr.status !== 200 && xhr.status !== 206) throw new Error(`GET ${url} ${range}: ${xhr.status}`);
+    return { status: xhr.status, total: Number(xhr.getResponseHeader('Content-Range')?.split('/')[1]), bytes: Uint8Array.from(xhr.response as string, (c) => c.charCodeAt(0)) };
+  };
+  const first = get(`bytes=0-${piece - 1}`);
+  if (first.status === 200 || !first.total) return first.bytes; // no range support: whole body came back
+  const out = new Uint8Array(first.total); out.set(first.bytes, 0);
+  for (let o = first.bytes.length; o < first.total; o += piece) {
+    const end = Math.min(o + piece, first.total) - 1;
+    let tries = 0;
+    for (;;) { try { const r = get(`bytes=${o}-${end}`); if (r.bytes.length !== end - o + 1) throw new Error(`short piece ${r.bytes.length}`); out.set(r.bytes, o); break; } catch (e) { if (++tries > 5) throw e; } }
+  }
+  return out;
+}
