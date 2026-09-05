@@ -65,7 +65,7 @@ Milestone M3: a new user with a wallet and Swarm Desktop creates a project, impo
 
 - Encryption hook in `swarm-collaborative-docs` (upstream), project key carried in the link fragment; encrypted snapshots, deltas and blobs.
 - TURN option in settings; own STUN default (D-15).
-- ENS name for the app. Flowing websites from Typst's HTML export with swarmtyp themes, once typst.ts exposes the exporter in the web build (D-24, S11).
+- ENS name for the app. Flowing websites from Typst's HTML export once Typst lifts its feature flag and typst.ts exposes the exporter in the web build (D-24, S11 part 3: wait for Typst, build nothing of our own).
 - Incremental compile if S2 found a path; large-document performance.
 - Accessibility pass; keyboard-only operation.
 

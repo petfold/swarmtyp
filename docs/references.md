@@ -21,7 +21,7 @@ Outside projects swarmtyp depends on or learns from. Check versions and status b
 
 ## Names and websites (D-24)
 
-- **Typst HTML export** — https://typst.app/docs/reference/html/ (experimental, `--features html`, semantic markup without CSS, `target()` for dual-output sources; Typst 0.15.1).
+- **Typst HTML export** — https://typst.app/docs/reference/html/ (experimental, `--features html`, semantic markup without CSS, `target()` for dual-output sources; Typst 0.15.1). Tracking issue https://github.com/typst/typst/issues/5512 (NLnet-funded; CSS deferred; no stabilisation date). 0.15.0 changelog: MathML, bundle export.
 - **Gwei Name Service** — https://gwei.domains/ , contracts and SDK https://github.com/lucadonnoh/gwei-names (`.gwei` names on Ethereum mainnet, ERC-721, no admin, Swarm contenthash supported, gateway `<name>.gwei.domains`, free `.id.gwei` subnames; hosting guide https://gwei.domains/guide/). Resolved by Freedom Browser alongside ENS `.eth`/`.box`, WNS `.wei`, Tezos `.tez`.
 - **ENS** — https://ens.domains/ (`.eth`, contenthash with the Swarm codec).
 
