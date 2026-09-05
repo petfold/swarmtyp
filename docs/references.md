@@ -19,6 +19,12 @@ Outside projects swarmtyp depends on or learns from. Check versions and status b
 - **Hunspell dictionaries** — https://github.com/wooorm/dictionaries (per-language licences listed) or https://github.com/LibreOffice/dictionaries. Only if spellcheck is built.
 - **Typst reference documentation** — built from the typst repository's `docs/` directory and doc comments with `cargo docit compile` (static site or PDF). Candidate for hosting on Swarm; check the licence of `typst-dev-assets` first.
 
+## Names and websites (D-24)
+
+- **Typst HTML export** — https://typst.app/docs/reference/html/ (experimental, `--features html`, semantic markup without CSS, `target()` for dual-output sources; Typst 0.15.1).
+- **Gwei Name Service** — https://gwei.domains/ , contracts and SDK https://github.com/lucadonnoh/gwei-names (`.gwei` names on Ethereum mainnet, ERC-721, no admin, Swarm contenthash supported, gateway `<name>.gwei.domains`, free `.id.gwei` subnames; hosting guide https://gwei.domains/guide/). Resolved by Freedom Browser alongside ENS `.eth`/`.box`, WNS `.wei`, Tezos `.tez`.
+- **ENS** — https://ens.domains/ (`.eth`, contenthash with the Swarm codec).
+
 ## Clients
 
 - **Freedom Browser** — https://github.com/solardev-xyz/freedom-browser (MPL-2.0; checkout at `../freedom-browser`). Electron browser with native `bzz://` (per-hash origin), a bundled Rust Swarm light node (Ant, Bee-shaped API) and a permissioned `window.swarm` provider. Tested with the S1 page on 2026-09-05; see S1 and D-22. Issues filed from that test: `freedom-hq/ant#79` (comment), `freedom-hq/ant#82`, `solardev-xyz/freedom-browser#218`. Ant repository: https://github.com/freedom-hq/ant.

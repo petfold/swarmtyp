@@ -100,7 +100,7 @@ Does it make sense? Yes for them. Their defensible assets are the brand, the com
 
 ## 7. Where swarmtyp is different
 
-Free forever by construction: no account, no sign-up gate on sharing, multi-file or collaboration; no server that can be shut down or breached; every snapshot content-addressed and retrievable; publishing to a permanent `bzz` link; private projects a gateway operator cannot read (Phase 4); a package mirror that does not depend on one company's registry. What swarmtyp cannot match without a server: Git and bibliography sync, email invites, file conversion, and quotas as a product. Those are accepted losses under D-05.
+Free forever by construction: no account, no sign-up gate on sharing, multi-file or collaboration; no server that can be shut down or breached; every snapshot content-addressed and retrievable; publishing to a permanent `bzz` link, and as a website with its own name in one step (D-24; typst.app's website export is a zip the user hosts elsewhere, and experimental); private projects a gateway operator cannot read (Phase 4); a package mirror that does not depend on one company's registry. What swarmtyp cannot match without a server: Git and bibliography sync, email invites, file conversion, and quotas as a product. Those are accepted losses under D-05.
 
 ## 8. Their web-app roadmap (as published 2026-09-05)
 

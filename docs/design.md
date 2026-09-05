@@ -127,7 +127,7 @@ typst.ts renders pages either as SVG or onto a canvas. SVG is crisp at any zoom 
 
 ### 4.9 Export and publish
 
-PDF export runs in the worker through the compiler. Publishing uploads the PDF to Swarm with the publisher's stamp and returns a reference; a "keep latest" option writes that reference to a per-project `published` feed owned by the publisher, giving a stable `bzz` link, and an optional ENS name on top. Old versions stay retrievable for as long as a stamp pays for them.
+PDF export runs in the worker through the compiler. Publishing uploads the PDF to Swarm with the publisher's stamp and returns a reference; a "keep latest" option writes that reference to a per-project `published` feed owned by the publisher, giving a stable `bzz` link, and an optional ENS name on top. Old versions stay retrievable for as long as a stamp pays for them. The same publish can produce a website (D-24): a paged site from SVG renders of the pages in a static shell, later a flowing site from Typst's HTML export with a swarmtyp stylesheet, uploaded as one collection with the PDF; the `published` feed manifest is the site's stable address and a `.gwei` or `.eth` name bound to that manifest never needs another transaction.
 
 ### 4.10 Identity, keys, stamps
 

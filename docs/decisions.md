@@ -137,3 +137,20 @@ Needs from dappdata, in its plan's swarmtyp section: the mnemonic source built, 
 Interim until then: the device key alone, as built in Phase 2 (D-20). It is the first root of this table, so nothing built for it is thrown away; the only Phase 3 work on it is moving the derivation behind the same interface as the other two.
 
 Costs: three onboarding texts and three recovery stories in the user guide; most early users on the weakest mode, so the T14 warning and the Freedom recommendation stay.
+
+## D-24 — Publish as a Swarm website, with a name — PROPOSED (2026-09-05)
+
+Context. typst.app exports "a PDF, image, or a website (in preview)"; the website is a zip the user hosts elsewhere. Typst's HTML export (0.13 onwards, `--features html`, 0.15.1 today) is experimental and emits semantic markup without CSS; `target()` lets one source serve paged and HTML output. swarmtyp already has the two halves typst.app lacks: a place to host (a Swarm collection is a website) and stable names (a feed manifest, then an ENS or GNS name on top). Freedom Browser resolves `.eth`, `.box`, `.wei`, `.gwei` and `.tez` names to `bzz://` content; `.gwei` names (Gwei Name Service, an ownerless ENS fork on Ethereum mainnet, ERC-721, under a dollar, free `.id.gwei` subnames) accept a Swarm contenthash and have a web gateway at `<name>.gwei.domains`.
+
+Proposal. A "Publish" action with three outputs and one address:
+
+1. **Paged site.** Every page rendered to SVG (S10, works today, exact) inside a small static HTML shell with the PDF attached. No dependence on Typst's HTML export; equations and layout are what the preview shows. This is the first release.
+2. **Flowing site.** Typst HTML export plus a swarmtyp stylesheet (a few themes), for documents written with `target()` in mind; multi-file projects map to pages with generated navigation. Ships when typst.ts exposes the HTML exporter in the web compiler and Typst lifts the experimental flag, or earlier behind a "preview" label like typst.app's.
+3. **PDF only**, as planned.
+
+Each publish uploads a collection (`index.html`, assets, blobs copied by reference) with the publisher's stamp; the `published` feed's manifest gives one stable `bzz://` address that every later publish updates without another transaction. Names: bind the feed manifest to a name once. `.gwei` registration and contenthash from inside the app through the user's wallet (cheap, one screen, fits D-23's wallet root); `.eth` by a deep link to the ENS app rather than reimplementing it; the free `.id.gwei` subnames as the no-cost path. Visitors without Freedom reach the site through `<name>.gwei.domains` or bzz.link, to be verified (S11), since D-22 found most public gateways refuse to render apps; a static site may fare differently.
+
+Why. It turns "content outlives the app" into a product: the document, its site and its name live on Swarm and Ethereum, not on typst.app or a host. It is the one export typst.app cannot offer as one click, and the natural on-ramp for people who want a page, not a paper. Publishing costs the publisher stamp; a site that nobody tops up expires, and the UI must say so (T7).
+
+Not decided: whether the paged site is the default or the fallback; whether swarmtyp maintains themes at all; the `target()` conventions we recommend to authors; wallet-only name purchase versus a sponsored `.id.gwei` subname for wallet-less users (D-23). Spike S11 first.
+

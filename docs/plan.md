@@ -54,18 +54,18 @@ After M2: the first public post to the Typst community and the questions to Typs
 ## Phase 3 — Close the loop (3–4 weeks)
 
 - Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror. Decide D-08 (fallback default) here.
-- Publish: PDF to Swarm, `published` feed, shareable link.
+- Publish (D-24): PDF to Swarm and a paged website (SVG pages in a static shell) as one collection; `published` feed manifest as the stable address; a `.gwei` or `.eth` name bound to it (registration and contenthash from the app for `.gwei` through the wallet, free `.id.gwei` subnames for the no-cost path). Spike S11 first.
 - Identity roots behind one interface (D-23): device key as today, mnemonic and wallet through dappdata's derivation; choose swarmtyp's app identity string first. Project list via dappdata.
 - Swarm Desktop path documented and tested (local Bee, own stamp).
 - Source ↔ preview jumping if typst.ts source maps cooperate.
 
-Milestone M3: a new user with a wallet and Swarm Desktop creates a project, imports `@preview` packages with the fallback switched off, invites a co-author, publishes a PDF at a stable link, and finds the project again on another device.
+Milestone M3: a new user with a wallet and Swarm Desktop creates a project, imports `@preview` packages with the fallback switched off, invites a co-author, publishes a PDF and a website at a stable named address, and finds the project again on another device.
 
 ## Phase 4 — Private projects and hardening
 
 - Encryption hook in `swarm-collaborative-docs` (upstream), project key carried in the link fragment; encrypted snapshots, deltas and blobs.
 - TURN option in settings; own STUN default (D-15).
-- ENS name for the app and for published documents.
+- ENS name for the app. Flowing websites from Typst's HTML export with swarmtyp themes, once typst.ts exposes the exporter in the web build (D-24, S11).
 - Incremental compile if S2 found a path; large-document performance.
 - Accessibility pass; keyboard-only operation.
 

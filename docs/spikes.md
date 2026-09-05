@@ -166,3 +166,14 @@ Result (2026-09-05, Chromium, main thread, hidden tab, `spikes/s1/site/s10.html`
 - `renderToCanvas` (the convenience call) renders every page inside `requestAnimationFrame` and adds a DOM text layer for selection; in a hidden tab it stalls until the tab is shown (S1). Per-page `renderCanvas` with an explicit 2D context does not wait for a frame.
 - Upstream bug: `renderCanvas` accepts `HTMLCanvasElement | CanvasRenderingContext2D` by its types, but an element makes the WASM panic (`RuntimeError: unreachable`); pass `canvas.getContext('2d')`. Also set `session.pixelPerPt` and `session.backgroundColor` as typst.ts's own code does.
 - Recommendation for D-17: canvas for the live preview of visible pages (2–3 pages, about 300 ms after a compile, no markup reaches the DOM), rendered in a worker with `OffscreenCanvas` (`TypstWorker.renderCanvas` exists) so hidden tabs and the main thread stop mattering; SVG for export and for a print-quality zoom. Confirm with Firefox before closing.
+
+## S11 — Websites on Swarm from swarmtyp (D-24)
+
+Question: can a published document be a Swarm website that ordinary visitors can open by name, and can Typst's HTML export run in the browser build?
+
+Method: (1) publish a two-page starter as a collection (`index.html`, SVG pages, PDF) with the release tooling; open it in Freedom by reference and through `bzz.link` and `<name>.gwei.domains` (a `.gwei` test name, or a free `.id.gwei` subname, with its contenthash set to the collection's feed manifest); record which gateways render a static site, given that D-22 found they refuse apps. (2) Check whether `typst-ts-web-compiler` 0.7/0.8 exposes the HTML exporter (the CLI has it; the web typings in 0.7.0 do not mention it); if not, estimate the upstream change. (3) Compile a `target()`-aware sample to HTML with the Typst CLI and note what a swarmtyp stylesheet must cover (headings, figures, math as SVG or MathML, code, footnotes).
+
+Exit: a table of gateways versus rendering; yes/no on HTML export in the web build with an upstream issue if no; a list of what the stylesheet needs; a go/no-go for the paged site as the first release.
+
+Result: *(slot)*
+
