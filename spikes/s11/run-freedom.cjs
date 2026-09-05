@@ -17,9 +17,9 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
   const go = async (url) => { const input = win.locator('[data-test="address-input"]'); await input.click(); await input.fill(url); await input.press('Enter'); log('navigated to', url); };
   const url = REF.includes(".") ? `bzz://${REF}/` : `bzz://${REF}/`; await go(url); const tNav = Date.now();
   let last = '';
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 200; i++) {
     await sleep(3000);
-    const s = await evalWv(`JSON.stringify({ href: location.href, origin: location.origin, title: document.title, pages: document.querySelectorAll('main .typst-page').length, parseError: document.body.textContent.includes('This page contains the following errors') })`);
+    const s = await evalWv(`JSON.stringify({ href: location.href, origin: location.origin, title: document.title, pages: document.querySelectorAll('main .typst-page').length + document.querySelectorAll('.preview canvas').length, status: (document.querySelector('.topbar .status')||{}).textContent, parseError: document.body.textContent.includes('This page contains the following errors') })`);
     if (s && s !== last) { last = s; log('page', String(s).slice(0, 400)); }
     if (String(s).includes('error.html')) { log('error page, retrying'); await go(url); }
     if (/"pages":[1-9]/.test(String(s))) break;

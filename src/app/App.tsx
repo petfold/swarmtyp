@@ -8,7 +8,7 @@ import { addBlob, addTextFile, filesMap, isTextPath, meta, normalizePath, remove
 import { pendingImport, useProject, useRoute } from './useProject';
 import { loadIdentity, shortAddress } from '../collab/identity';
 import { colorFor } from '../editor/remote-cursors';
-import { beeHealth, uploadBytes } from '../swarm/bee';
+import { PUBLIC_READ_GATEWAY, beeHealth, uploadBytes } from '../swarm/bee';
 import { createGenesis } from '../collab/genesis';
 import { loadSettings, saveSettings, type Settings } from './settings';
 import { Preview } from './Preview';
@@ -37,6 +37,7 @@ export function App() {
   const identity = useMemo(() => loadIdentity(), []);
   const [status, setStatus] = useState<Status>({ state: 'loading', stage: 'starting' });
   const [bee, setBee] = useState<{ ok: boolean; version?: string } | null>(null);
+  const [readSource, setReadSource] = useState<'node' | 'gateway' | null>(null);
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [compileMs, setCompileMs] = useState<number | null>(null);
   const [compiling, setCompiling] = useState(false);
@@ -62,13 +63,21 @@ export function App() {
 
   // Compiler worker and renderer.
   useEffect(() => {
-    const client = new CompileClient({ beeUrl: settings.beeUrl, allowFallback: settings.allowFallback });
-    client.onStatus = setStatus; setStatus(client.status); client.onActivity = setActivity;
-    clientRef.current = client;
+    let client: CompileClient | null = null; let cancelled = false;
     const renderer = new PageRenderer();
     renderer.init().then(() => { rendererRef.current = renderer; setRendererReady(true); }).catch((e) => setStatus({ state: 'error', message: 'renderer: ' + e.message }));
-    beeHealth(settings.beeUrl).then(setBee);
-    return () => { client.terminate(); renderer.destroy(); rendererRef.current = null; setRendererReady(false); };
+    // Reads (fonts, packages, blobs) come from the configured node when it answers, else from the public read gateway
+    // (D-25): a browser opening the app from a gateway or with no node still compiles; writes keep needing a node.
+    beeHealth(settings.beeUrl).then((h) => {
+      if (cancelled) return;
+      setBee(h);
+      const readUrl = h.ok ? settings.beeUrl : PUBLIC_READ_GATEWAY;
+      setReadSource(h.ok ? 'node' : 'gateway');
+      client = new CompileClient({ beeUrl: readUrl, allowFallback: settings.allowFallback });
+      client.onStatus = setStatus; setStatus(client.status); client.onActivity = setActivity;
+      clientRef.current = client;
+    });
+    return () => { cancelled = true; client?.terminate(); clientRef.current = null; renderer.destroy(); rendererRef.current = null; setRendererReady(false); };
   }, [settings.beeUrl, settings.allowFallback]);
 
   // Compile on change, debounced; drop stale results; persist locally.
@@ -167,6 +176,7 @@ export function App() {
         <button onClick={exportPdf} disabled={status.state !== 'ready'}>Export PDF</button>
         <button onClick={() => setShowSettings((v) => !v)} aria-label="Settings">⚙</button>
       </header>
+      {readSource === 'gateway' && route.kind === 'local' && <div className="banner">No Bee node answers at {settings.beeUrl}: fonts and packages come from the public read gateway, so you can write and export. Uploading images and sharing a project need a node with a postage batch (⚙ Settings).</div>}
       {project.error && <div className="banner">Swarm write failed: {project.error}. Your edits stay in this browser; check the postage batch in Settings (T7).</div>}
       <div className="body">
         <aside className="files">
@@ -203,7 +213,7 @@ export function App() {
           <div className="hint">Identity address {shortAddress(identity.address)} (this device; each tab signs with its own sub-key). The key sits in this browser's storage for this origin: on a local node or a path-based gateway other Swarm apps opened at the same address can read it (T14); Freedom Browser isolates it. <button onClick={() => { void navigator.clipboard?.writeText(localStorage.getItem('swarmtyp:identity') || ''); alert('Identity key copied. Keep it secret; paste it into another device to be the same person there.'); }}>Copy identity key</button> <button onClick={() => { const k = prompt('Paste an identity key (64 hex characters)'); if (k) { try { import('../collab/identity').then(({ importIdentity }) => { importIdentity(k); location.reload(); }); } catch (e) { alert(String((e as Error).message)); } } }}>Import…</button></div>
           {projectLink && <div className="hint">Project link: <code>{projectLink}</code></div>}
           <label>Bee node URL <input value={settings.beeUrl} onChange={(e) => setSettings({ ...settings, beeUrl: e.target.value })} onBlur={() => saveSettings(settings)} /></label>
-          <div className="hint">{bee === null ? 'checking…' : bee.ok ? `connected, Bee ${bee.version}` : 'not reachable'}</div>
+          <div className="hint">{bee === null ? 'checking…' : bee.ok ? `connected, Bee ${bee.version}` : `not reachable; fonts, packages and images are read from ${PUBLIC_READ_GATEWAY} instead, uploads and sharing need a node`}</div>
           <label>Postage batch id (for uploads) <input value={settings.stamp} onChange={(e) => setSettings({ ...settings, stamp: e.target.value.trim() })} onBlur={() => saveSettings(settings)} placeholder="64 hex characters, an immutable batch on your node" /></label>
           <label>STUN server (for direct connections between collaborators, D-15) <input value={settings.stun} onChange={(e) => setSettings({ ...settings, stun: e.target.value })} onBlur={() => saveSettings(settings)} /></label>
           <label><input type="checkbox" checked={settings.allowFallback} onChange={(e) => { const s = { ...settings, allowFallback: e.target.checked }; setSettings(s); saveSettings(s); }} /> Fetch missing packages from packages.typst.org (D-08; leaks which packages you use)</label>

@@ -39,7 +39,11 @@ Note the EXPIRES line: the name runs to 9/5/2027. Names are yearly; RENEW before
 - Before confirming in MetaMask, compare the recipient address with the NameNFT contract above.
 - After each session, tell Claude what you did; it verifies before you continue.
 
-## Session 1: test the editor on a subdomain (two transactions)
+## Session 1: test the editor on a subdomain (two transactions) — DONE 2026-09-05
+
+Result: bzz://app.swarmtyp.gwei/ works in Freedom; https://app.swarmtyp.gwei.domains/ has no TLS certificate (subdomains of a
+name are one label too deep for the gateway's wildcard), http:// works. Conclusion: subdomains are Freedom-only; the root
+is the web address.
 
 Why first: the gateway serves whole files without Range support and the editor loads 12 MB plus a worker and fonts.
 That has not been tried through gwei.domains. A subdomain lets us test without touching the root.
@@ -75,7 +79,12 @@ Only after Session 1 is confirmed to work.
    and confirm. Within about five minutes https://swarmtyp.gwei.domains/ opens the editor; Freedom sees it at once.
 6. Tell Claude. It updates the user guide and CLAUDE.md so the stable address is written as swarmtyp.gwei everywhere.
 
-## Session 3: swarmtyp's own pages as subdomains (two transactions each)
+## Session 3: dropped (subdomains have no certificate on the web gateways)
+
+The guide and the demo will live under paths of the root, swarmtyp.gwei/guide/ and swarmtyp.gwei/demo/, added by the
+release tooling; no transactions needed. The rest of this section is kept for reference only.
+
+### (old) Session 3: swarmtyp's own pages as subdomains
 
 7. Subdomain `demo` (SUBDOMAIN → label `demo` → REGISTER SUBDOMAIN), then NAME field `demo.swarmtyp` → SET WEBSITE:
 

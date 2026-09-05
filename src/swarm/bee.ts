@@ -1,4 +1,7 @@
 // Minimal Bee client over fetch (design §4.5, §4.9). bee-js comes in with the collaboration library in Phase 2.
+/** Public read path when no Bee node answers (D-25, S11): `/bytes` and `/bzz` with Range and open CORS; writes need a node. */
+export const PUBLIC_READ_GATEWAY = 'https://download.gateway.ethswarm.org';
+
 export async function beeHealth(beeUrl: string): Promise<{ ok: boolean; version?: string }> {
   try { const r = await fetch(`${beeUrl}/health`); if (!r.ok) return { ok: false }; const j = await r.json(); return { ok: true, version: j.version }; } catch { return { ok: false }; }
 }

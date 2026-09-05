@@ -6,7 +6,9 @@ swarmtyp is a Typst editor that runs entirely in your browser and lives on Swarm
 
 ## 1. Opening the app
 
-You need a way to read Swarm. Either of these works:
+You need a way to read Swarm. Any of these works:
+
+- **Any browser, no node**: open the app through a public gateway (the `.gwei` address will be listed here once it points at the editor). Fonts and packages come from Swarm's public read gateway; you can write and export PDFs. Uploading images and sharing a project need a Bee node with a postage batch, see Settings. A banner says so.
 
 - **Freedom Browser** (recommended if you have no Swarm node). Paste this into the address bar:
 
