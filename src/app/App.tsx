@@ -32,6 +32,8 @@ export function App() {
   const [bee, setBee] = useState<{ ok: boolean; version?: string } | null>(null);
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [compileMs, setCompileMs] = useState<number | null>(null);
+  const [compiling, setCompiling] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null);
   const [packages, setPackages] = useState<{ key: string; source: string }[]>([]);
   const [artifactVersion, setArtifactVersion] = useState(0);
   const [active, setActive] = useState('/main.typ');
@@ -55,7 +57,7 @@ export function App() {
   // Compiler worker and renderer.
   useEffect(() => {
     const client = new CompileClient({ beeUrl: settings.beeUrl, allowFallback: settings.allowFallback });
-    client.onStatus = setStatus; setStatus(client.status);
+    client.onStatus = setStatus; setStatus(client.status); client.onActivity = setActivity;
     clientRef.current = client;
     const renderer = new PageRenderer();
     renderer.init().then(() => { rendererRef.current = renderer; setRendererReady(true); }).catch((e) => setStatus({ state: 'error', message: 'renderer: ' + e.message }));
@@ -68,9 +70,8 @@ export function App() {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const run = async () => {
       const client = clientRef.current; if (!client || client.status.state !== 'ready') return;
-      const out = await client.compile(snapshot(doc));
-      if (!out) return; // superseded
-      apply(out);
+      setCompiling(true);
+      try { const out = await client.compile(snapshot(doc)); if (out) apply(out); } finally { setCompiling(false); }
     };
     const apply = (out: CompileOutput) => {
       setDiagnostics(out.diagnostics); setCompileMs(out.ms); if (out.packages.length) setPackages((p) => [...p, ...out.packages]);
@@ -116,7 +117,7 @@ export function App() {
       <header className="topbar">
         <strong>swarmtyp</strong>
         <input className="project-name" value={m.name} onChange={(e) => projectMap(doc).set('name', e.target.value)} />
-        <span className="status">{statusText(status, compileMs, errors, warnings)}</span>
+        <span className="status">{compiling ? 'compiling…' + (activity ? ` fetching ${activity}` : '') : statusText(status, compileMs, errors, warnings)}</span>
         {busy && <span className="status">{busy}</span>}
         <span className="spacer" />
         <label className="zoom">Zoom <input type="range" min={0.5} max={2.5} step={0.1} value={settings.zoom} onChange={(e) => { const s = { ...settings, zoom: Number(e.target.value) }; setSettings(s); saveSettings(s); }} /> {Math.round(settings.zoom * 100)}%</label>

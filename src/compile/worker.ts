@@ -17,6 +17,7 @@ class SwarmPackageRegistry {
     const hit = this.cache.get(key); if (hit) return hit;
     let data: Uint8Array, source: string;
     try {
+      post({ type: 'progress', stage: `package ${spec.name}:${spec.version}` });
       if (this.index[key]) { source = 'swarm'; data = syncGetRanged(`${this.beeUrl}/bytes/${this.index[key]}`); }
       else if (this.allowFallback && spec.namespace === 'preview') { source = 'packages.typst.org'; data = syncGetRanged(`https://packages.typst.org/preview/${spec.name}-${spec.version}.tar.gz`); }
       else return undefined;
@@ -47,7 +48,7 @@ async function init(m: Extract<ToWorker, { type: 'init' }>) {
   post({ type: 'progress', stage: 'fonts' });
   const fb = createTypstFontBuilder();
   await fb.init({ getModule: () => wasm });
-  for (const e of m.fontIndex) { const url = `${m.beeUrl}/bytes/${e.ref}`; await fb.addLazyFont(e.info as never, () => syncGetRanged(url)); }
+  for (const e of m.fontIndex) { const url = `${m.beeUrl}/bytes/${e.ref}`; await fb.addLazyFont(e.info as never, () => { post({ type: 'progress', stage: `font ${e.file}` }); return syncGetRanged(url); }); }
   await fb.build(async (r) => c.setFonts(r));
   compiler = c;
   post({ type: 'ready', ms: Math.round(performance.now() - t0) });

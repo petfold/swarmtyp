@@ -13,15 +13,17 @@ export class CompileClient {
   private waiters = new Map<number, (o: CompileOutput) => void>();
   status: Status = { state: 'loading', stage: 'starting' };
   onStatus: (s: Status) => void = () => {};
+  /** What the worker is fetching right now during a compile (fonts, packages), or null. */
+  onActivity: (what: string | null) => void = () => {};
 
   constructor(opts: { beeUrl: string; packageIndex?: PackageIndex; allowFallback: boolean }) {
     this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
     this.worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       const m = ev.data;
-      if (m.type === 'progress') this.set({ state: 'loading', stage: m.stage, done: m.done, total: m.total });
+      if (m.type === 'progress') { if (this.status.state === 'ready') this.onActivity(m.stage); else this.set({ state: 'loading', stage: m.stage, done: m.done, total: m.total }); }
       else if (m.type === 'ready') this.set({ state: 'ready', ms: m.ms });
       else if (m.type === 'init-error') this.set({ state: 'error', message: m.message });
-      else if (m.type === 'result') { const w = this.waiters.get(m.id); this.waiters.delete(m.id); w?.({ artifact: m.artifact, diagnostics: m.diagnostics, ms: m.ms, packages: m.packages }); }
+      else if (m.type === 'result') { this.onActivity(null); const w = this.waiters.get(m.id); this.waiters.delete(m.id); w?.({ artifact: m.artifact, diagnostics: m.diagnostics, ms: m.ms, packages: m.packages }); }
     };
     const compilerUrl = new URL('wasm/compiler.wasm.bin', new URL('./', document.baseURI)).href;
     const init: ToWorker = { type: 'init', beeUrl: opts.beeUrl, compilerUrl, fontIndex: fontIndex as FontIndexEntry[], packageIndex: opts.packageIndex ?? (packagesIndex as PackageIndex), allowFallback: opts.allowFallback };
