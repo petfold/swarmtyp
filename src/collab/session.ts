@@ -20,6 +20,8 @@ export interface Session {
   topic: string; doc: Y.Doc; identity: Identity; signer: Identity;
   updateCursor(anchor: number, head: number): void;
   stop(): void;
+  /** Stop and delete this device's copy of the project (D-19 "leave project"). Feeds on Swarm are untouched. */
+  leave(): Promise<void>;
 }
 
 export async function openSession(opts: { topic: string; beeUrl: string; stamp?: string; stun: string; nickname: string }, ev: SessionEvents = {}): Promise<Session> {
@@ -44,5 +46,6 @@ export async function openSession(opts: { topic: string; beeUrl: string; stamp?:
     topic: opts.topic, doc, identity, signer,
     updateCursor: (anchor, head) => swarmDoc.updateCursor({ anchor, head }),
     stop: () => { swarmDoc.stop(); void persistence.destroy(); },
+    leave: async () => { swarmDoc.stop(); await persistence.clearData(); },
   };
 }

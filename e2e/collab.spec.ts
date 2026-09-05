@@ -78,6 +78,14 @@ test('two people edit one project, see each other, and lose nothing on reload', 
   expect(await text(carol.page)).toContain('Alice too');
   expect((await text(carol.page)).split('Hello from swarmtyp').length).toBe(2);
 
+  // Leave: Bob's copy on this device goes, the project stays on Swarm (D-19). The confirm() is accepted by the dialog handler.
+  const dbName = `swarmtyp:${/#\/p\/([0-9a-f]{64})/.exec(link)![1]}`;
+  expect((await bob.page.evaluate(() => indexedDB.databases())).map((d) => d.name)).toContain(dbName);
+  await bob.page.getByRole('button', { name: 'Leave' }).click();
+  await expect(bob.page).not.toHaveURL(/#\/p\//);
+  await expect.poll(async () => (await bob.page.evaluate(() => indexedDB.databases())).map((d) => d.name)).not.toContain(dbName);
+  expect(await text(carol.page)).toContain('Bob was here'); // still there for everyone else
+
   await alice.context.close();
   await bob.context.close();
   await carol.context.close();

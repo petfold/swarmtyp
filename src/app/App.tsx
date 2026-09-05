@@ -160,7 +160,10 @@ export function App() {
         )}
         {route.kind === 'local'
           ? <button onClick={share} title="Create the project on Swarm and get a link others can open">Share…</button>
-          : <button onClick={() => { if (projectLink) { void navigator.clipboard?.writeText(projectLink); alert(`Project link copied. Anyone with it can read and write (T1).\n${projectLink}`); } }}>Copy link</button>}
+          : <>
+              <button onClick={() => { if (projectLink) { void navigator.clipboard?.writeText(projectLink); alert(`Project link copied. Anyone with it can read and write (T1).\n${projectLink}`); } }}>Copy link</button>
+              <button className="leave" title="Remove this project's copy from this browser; the project stays on Swarm for everyone with the link" onClick={() => { if (confirm('Leave this project? Its copy on this device is deleted. The project stays on Swarm and you can open the link again later.')) { const s = project.session; void (s ? s.leave() : Promise.resolve()).finally(() => { location.hash = ''; }); } }}>Leave</button>
+            </>}
         <button onClick={exportPdf} disabled={status.state !== 'ready'}>Export PDF</button>
         <button onClick={() => setShowSettings((v) => !v)} aria-label="Settings">⚙</button>
       </header>

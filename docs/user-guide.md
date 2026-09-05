@@ -98,6 +98,7 @@ While you type, the app writes your changes to your own feed on Swarm and sends 
 
 - A change reaches Swarm a few seconds after you stop typing. If you close the tab in that window the browser asks whether to leave; say no, wait a moment, then close.
 - Someone who opens the link before its creator's first snapshot is written sees `waiting for the document…` until it arrives.
+- **Leave** removes the project's copy from this browser and returns you to your own document. The project stays on Swarm; open the link again to come back. Your feed keeps what you wrote.
 
 **Your identity.** The first time the app runs it makes a key for you and keeps it in this browser. Your chip shows the name you chose plus the last characters of your address, which is what proves your edits are yours. To be the same person on another device, use **Copy identity key** in Settings there and **Import…** here. Keep the key private: whoever has it can write as you. Each tab you open signs with its own sub-key, so two tabs of yours count as two people in the list; that is intended.
 
