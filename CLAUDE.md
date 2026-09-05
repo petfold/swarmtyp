@@ -6,7 +6,7 @@ Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
 
 ## Status
 
-Phase 0 spikes run 2026-09-05, results in `docs/spikes.md` (throwaway code under `spikes/`). No product code. Next step: the owner closes D-03, D-04, D-17 and answers D-22 (`docs/plan.md`, Phase 0 status); then Phase 1.
+Phase 1 (solo editor, M1) started 2026-09-05; Phase 0 results in `docs/spikes.md`, throwaway code under `spikes/`. Stack pinned: typst.ts 0.7.0 (D-04), CodeMirror 6 (D-03), canvas preview of visible pages (D-17). D-22 (who serves users without a node) is OPEN and needed before M1 is shown outside.
 
 ## Read in this order
 
@@ -29,7 +29,7 @@ Phase 0 spikes run 2026-09-05, results in `docs/spikes.md` (throwaway code under
 - Treat collaborator content as untrusted: sanitise rendered SVG before it reaches the DOM (`docs/threats.md` T5).
 - Nothing from typst.app's served bundle (JS, WASM, CSS, icons, font index, dictionaries) enters this repo (D-18). Same compiler, from source via typst.ts; fonts and dictionaries from their upstream projects.
 
-## Stack (proposed; Phase 0 confirms)
+## Stack (confirmed by Phase 0)
 
 TypeScript · Vite (`base: './'`, hash routing) · React · CodeMirror 6 + `y-codemirror.next` · Yjs · typst.ts 0.7.x (`@myriaddreamin/typst.ts`, `typst-ts-web-compiler`, `typst-ts-renderer`) in a Web Worker · `@ethersphere/bee-js` 12.x against Bee 2.8.x · `@solarpunkltd/swarm-collaborative-docs` with `createSwarmRtcTransport` · Vitest for logic · Playwright for two-browser collaboration tests against a Bee Factory network.
 

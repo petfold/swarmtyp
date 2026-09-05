@@ -10,13 +10,13 @@ Supersedes the earlier working name `galley`, which was a printing term (the typ
 
 The library already does per-peer snapshot feeds, member discovery, signed deltas, cursors, and WebRTC signalling over Swarm feeds, and Solar Punk owns it. Anything it lacks (encryption hook, per-session keys) goes upstream. Writing a second Yjs-over-Swarm provider would split effort for no gain.
 
-## D-03 — CodeMirror 6, not Monaco — PROPOSED
+## D-03 — CodeMirror 6, not Monaco — DECIDED (2026-09-05)
 
-Monaco is the library's proven example, but it is large, and its strengths (TypeScript language services) do not apply to Typst. CodeMirror 6 is small, has `y-codemirror.next`, and is what TypstDrive uses. Bundle size matters more here than elsewhere because Swarm serves every byte on first load. Revert to Monaco if S5 shows the CodeMirror awareness bridge is painful. Evidence, 2026-09-05: typst.app's own client is CodeMirror 6 with `y-codemirror.next` (`competition.md` §2.1). Recommend moving to DECIDED once S5 confirms the awareness bridge.
+Monaco is the library's proven example, but it is large, and its strengths (TypeScript language services) do not apply to Typst. CodeMirror 6 is small, has `y-codemirror.next`, and is what TypstDrive uses. Bundle size matters more here than elsewhere because Swarm serves every byte on first load. Revert to Monaco if S5 shows the CodeMirror awareness bridge is painful. Evidence, 2026-09-05: typst.app's own client is CodeMirror 6 with `y-codemirror.next` (`competition.md` §2.1). Closed 2026-09-05 after S5: `yCollab(ytext, null)` binds to `SwarmDoc.doc` with no awareness object; remote cursors are drawn from `AWARENESS_UPDATED`.
 
-## D-04 — Use typst.ts rather than our own WASM build of typst — PROPOSED
+## D-04 — Use typst.ts rather than our own WASM build of typst — DECIDED (2026-09-05)
 
-typst.ts is maintained, published on npm, and used by tinymist's preview. Keep swarmtyp's compiler wrapper thin (one module in `src/compile/`) so a self-built `wasm-bindgen` wrapper around `typst` could replace it if typst.ts falls behind or its API blocks S2/S3.
+typst.ts is maintained, published on npm, and used by tinymist's preview. Keep swarmtyp's compiler wrapper thin (one module in `src/compile/`) so a self-built `wasm-bindgen` wrapper around `typst` could replace it if typst.ts falls behind or its API blocks S2/S3. Closed 2026-09-05 after S1–S4, S9, S10: every capability the design needs exists in 0.7.0 (shadow filesystem, synchronous package registry, lazy fonts, incremental compile, PDF, semantic tokens, SVG and canvas). Accepted: one Typst release of lag (0.7.0 embeds 0.14.2; 0.8.0-rc3 embeds 0.15.0). Phase 1 pins **0.7.0**; move to 0.8.0 when it is final and re-run S2. Known upstream bugs: typst.ts #888, #889 (`docs/upstream/typst-ts.md`).
 
 ## D-05 — No server, ever — DECIDED
 
@@ -30,7 +30,7 @@ Phase 2 generates a secp256k1 key in the browser with export/import. Phase 3 der
 
 Two supported modes only: the user's own Bee with the user's own batch, or a gateway that stamps from a sponsored batch. No "paste a batch id into a gateway" mode; Bee cannot stamp with a batch its wallet does not own.
 
-## D-08 — Fallback to `packages.typst.org` — OPEN
+## D-08 — Fallback to `packages.typst.org` — OPEN (decide at the Phase 3 gate, after `tools/mirror`)
 
 On by default until the Swarm mirror covers what users import; off by default in private projects; always visible in the UI when a package came from the fallback. Decide after S3 and once the mirror exists whether to flip the default globally.
 
@@ -66,9 +66,9 @@ The library example uses Google's STUN. Options: keep it, run a Solar Punk STUN,
 
 The reference of the immutable initial `project` JSON upload is the id and the `SwarmDoc` topic. Unique, verifiable, no registry needed.
 
-## D-17 — Preview renderer: canvas first, SVG where vectors matter — PROPOSED
+## D-17 — Preview renderer: canvas first, SVG where vectors matter — DECIDED (2026-09-05)
 
-typst.ts ships both renderers. Canvas output cannot carry markup, which removes the SVG-injection surface (T5) from the live preview by construction; typst.app paints raster pages the same way. SVG stays for export and for zoom levels where raster looks poor, always sanitised. S10 measures both paths (sharpness, latency, memory, zoom behaviour); if canvas fails the quality bar, revert to sanitised SVG.
+typst.ts ships both renderers. Canvas output cannot carry markup, which removes the SVG-injection surface (T5) from the live preview by construction; typst.app paints raster pages the same way. SVG stays for export and for zoom levels where raster looks poor, always sanitised. Closed 2026-09-05 after S10: canvas for the pages in view (about 120 ms per A4 page at 2 px/pt, no markup reaches the DOM), rendered with an explicit 2D context or `OffscreenCanvas` in a worker so hidden tabs do not stall it (typst.ts #889); SVG for export and print-quality zoom, sanitised; a selectable text layer is a later addition. Only visible pages are rendered in either mode.
 
 ## D-18 — Nothing from typst.app's bundle enters this repository — PROPOSED
 
@@ -97,3 +97,13 @@ Decide before the first public post, after M1 at the earliest.
 ## D-22 — Who serves the app to users without a Bee node — OPEN
 
 Context (S1, 2026-09-05). The design assumes "a Bee node or gateway". In 2026 no public Swarm gateway renders arbitrary content: `download.gateway.ethswarm.org` forces downloads, `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org` and `bzz.link` allow-list hashes and redirect the rest to a forbidden page, `gateway.ethswarm.org` is a landing page. Reads through them are fine for data (dappdata S2 used them for feeds), not for hosting a page. A user with Swarm Desktop or a light node is unaffected. Options: (a) Solar Punk runs a read gateway for the app bundle, fonts and packages (reads need no stamp; cost is bandwidth), with writes still going to the user's own node or a sponsoring gateway per D-07; (b) ask bzz.link's operator to allow-list swarmtyp's release feed; (c) require a local node (Swarm Desktop) and say so, which excludes the "open a link" onboarding; (d) mirror the release on ordinary web hosting as well, which contradicts D-05 in spirit though not in mechanism; (e) Freedom Browser (tested 2026-09-05, S1): native `bzz://` with a per-hash origin and a bundled light node, so a `bzz://swarmtyp.eth/` link works with no node and no gateway, at 36 KB/s cold in ultra-light mode today (a five-minute first load, then cached) and with a large-body truncation bug that the ranged loader in S1 sidesteps; writes would go through its `window.swarm` provider, which needs an upstream transport in swarm-collaborative-docs. Leaning (a) plus (b) for the web, (e) as the recommended client; decide before M1 is demonstrated to anyone outside.
+
+What a Solar Punk read gateway must do for (a), to raise with whoever would run it (2026-09-05; none exists on record yet):
+1. Serve `GET /bzz/<ref>/<path>` inline: no `Content-Disposition: attachment`, Bee's content types passed through (`text/javascript` for `.mjs`, `application/wasm`), `Accept-Ranges` and `206` for range requests (the app loads large assets in 1 MB ranges), `Cache-Control: immutable` for content addresses.
+2. No allow-list, or allow-list swarmtyp's release feed and ENS name; the failing public gateways redirect unknown hashes to a forbidden page.
+3. CORS `Access-Control-Allow-Origin: *` on reads, so a page served from one gateway can read feeds, fonts and packages from another.
+4. Origin isolation: serve apps from a subdomain per reference or name (`<cid>.gw.example` or `swarmtyp.gw.example`), not only path-based, or every app on the gateway shares one origin and localStorage and IndexedDB (T14, D-20). Needs wildcard DNS and a wildcard certificate.
+5. Resolve the app's ENS name (`bzz://swarmtyp.eth` style) to its contenthash so the link is stable across releases.
+6. Bandwidth budget: a cold first load is about 12 MB compressed per user (compiler 10.8 MB, renderer 1 MB, fonts and code), then cached by the browser; a CDN or `Cache-Control` in front keeps repeat cost near zero. Compression on the proxy is optional since the app inflates its own gzip.
+7. Reads only, or also writes: writes through the gateway mean a sponsored batch and abuse controls (rate limit per identity, quota, dappdata T7); reads need no stamp. The alternative for writes is dappdata's model, where the user's own batch is stamped in the browser and any CORS-enabled node uploads it.
+8. Operations: who owns it, uptime expectation, logs and what they retain (T3: the operator sees plaintext until Phase 4 encryption), and whether Solar Punk's existing Bee infrastructure can add a proxy rather than run a new node.

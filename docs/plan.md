@@ -1,12 +1,12 @@
 # Plan
 
-Phases, each with a milestone you can demonstrate. Dates are effort guesses, not commitments. Current position: **Phase 0, spikes run on 2026-09-05; waiting for the decisions below.**
+Phases, each with a milestone you can demonstrate. Dates are effort guesses, not commitments. Current position: **Phase 1 started 2026-09-05.**
 
 ## Phase 0 — Spikes (1–2 weeks)
 
 Answer the questions in `spikes.md`. No product code. Throwaway scripts live in `spikes/` and may be deleted afterwards; the *results* go into `spikes.md` and, where they change the design, into `design.md` and `decisions.md`.
 
-Done when: every spike has a recorded result and D-03, D-04, D-08, D-17 have moved from PROPOSED/OPEN to DECIDED.
+Done when: every spike has a recorded result and D-03, D-04, D-17 have moved from PROPOSED to DECIDED (D-08 moved to the Phase 3 gate). **Gate passed 2026-09-05:** D-03, D-04, D-17 closed; S1 Firefox and S8 deploy timings carried into Phase 1 and D-22.
 
 **Status 2026-09-05.** Answered: S2, S3, S4, S5, S6, S9, S10 (results in `spikes.md`). S1 answered for the local node; the public-gateway half cannot be run because no public gateway renders apps (D-22), and Firefox waits for Playwright. S7 and S8 partial: endpoints and CORS known, WASM compression path proven, no deploy script yet and no gateway timings. Proposed closures for the owner:
 
@@ -48,7 +48,7 @@ After M2: the first public post to the Typst community and the questions to Typs
 
 ## Phase 3 — Close the loop (3–4 weeks)
 
-- Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror.
+- Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror. Decide D-08 (fallback default) here.
 - Publish: PDF to Swarm, `published` feed, shareable link.
 - Identity from Sign-In with Ethereum (dappdata derivation); project list via dappdata.
 - Swarm Desktop path documented and tested (local Bee, own stamp).
