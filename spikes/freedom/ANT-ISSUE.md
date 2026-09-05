@@ -1,6 +1,6 @@
 # Draft issue for Ant (Freedom Browser's Swarm node): whole-file GET returns 200 and truncates the body on the first chunk retrieval failure
 
-Collected 2026-09-05 while testing swarmtyp's S1 page in Freedom Browser. Draft for `solardev-xyz/freedom-browser` (or the Ant repository, if separate); fill in the repository and the Ant commit before filing.
+Collected 2026-09-05 while testing swarmtyp's S1 page in Freedom Browser. **Filed** as a comment on the existing report of the same defect at GiB scale, `freedom-hq/ant#79`: https://github.com/freedom-hq/ant/issues/79#issuecomment-5551007670. The Ant repository is https://github.com/freedom-hq/ant (Freedom pins release `v0.5.43`; `v0.5.44` exists, untested).
 
 ## Environment
 
