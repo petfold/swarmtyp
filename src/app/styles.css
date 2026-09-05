@@ -1,0 +1,27 @@
+:root { color-scheme: light; --bg: #f4f4f5; --panel: #fff; --border: #d9d9de; --fg: #1f2328; --muted: #6b7280; --accent: #2563eb; --err: #b91c1c; --warn: #b45309; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
+button, input { font: inherit; }
+button { border: 1px solid var(--border); background: var(--panel); border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+.app { display: flex; flex-direction: column; height: 100%; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 6px 10px; background: var(--panel); border-bottom: 1px solid var(--border); }
+.topbar .project-name { border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; min-width: 14em; } .topbar .project-name:hover, .topbar .project-name:focus { border-color: var(--border); }
+.topbar .status { color: var(--muted); font-size: 12px; } .topbar .spacer { flex: 1; } .topbar .zoom { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.body { display: grid; grid-template-columns: 220px minmax(320px, 1fr) minmax(320px, 1fr); flex: 1; min-height: 0; }
+.files { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; display: flex; flex-direction: column; font-size: 13px; }
+.files-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; } .files-head span:first-child { flex: 1; }
+.files ul { list-style: none; margin: 0; padding: 0; } .files li { display: flex; align-items: center; } .files li.active { background: #eef2ff; }
+.files .file { flex: 1; text-align: left; border: 0; background: none; padding: 4px 10px; border-radius: 0; font-family: ui-monospace, monospace; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.files .file-actions { display: none; gap: 2px; padding-right: 4px; } .files li:hover .file-actions { display: flex; } .files .file-actions button { padding: 0 4px; font-size: 11px; }
+.files .upload { cursor: pointer; border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; background: var(--panel); }
+.problems { border-top: 1px solid var(--border); margin-top: auto; max-height: 40%; overflow: auto; } .problems li.error .file { color: var(--err); } .problems li.warning .file { color: var(--warn); } .problems .file { white-space: normal; font-family: inherit; }
+.packages { padding: 6px 10px; color: var(--muted); font-size: 12px; } .packages span { display: block; }
+.editor { min-width: 0; min-height: 0; display: flex; } .editor-host { flex: 1; min-width: 0; overflow: auto; background: var(--panel); } .editor-host .cm-editor { height: 100%; } .editor-host .cm-scroller { font: 13px/1.5 ui-monospace, "Cascadia Mono", Menlo, monospace; }
+.blob-view { padding: 16px; color: var(--muted); } .blob-view img { max-width: 100%; border: 1px solid var(--border); } .blob-view code { user-select: all; word-break: break-all; }
+.preview { overflow: auto; background: #e5e7eb; border-left: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.preview .page { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); display: block; } .preview-empty { color: var(--muted); margin-top: 40px; }
+.settings { position: absolute; top: 44px; right: 10px; width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 10px; z-index: 5; }
+.settings h2 { margin: 0; font-size: 15px; } .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; } .settings input[type=text], .settings input:not([type]) { border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-family: ui-monospace, monospace; }
+.settings .hint { color: var(--muted); font-size: 12px; }

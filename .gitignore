@@ -11,3 +11,4 @@ spikes/**/out.pdf
 spikes/s5/lib/
 spikes/**/*.tar
 /Screenshot*.png
+public/wasm/
