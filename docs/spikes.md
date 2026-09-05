@@ -86,7 +86,16 @@ Method: two laptops on different networks, one gateway Bee, a shared topic. Chec
 
 Exit: latency and cost numbers; a recommendation on debounce interval; a decision on the cursor approach.
 
-Result: —
+Result (2026-09-05, two Chromium tabs on one machine, both hidden, Swarm Desktop Bee 2.8.2 on mainnet, `spikes/s5/app`, library built from `master` adcb7d5 with two local patches: `yjs` made external, pnpm `allowBuilds` for the bee-js fork): **works end to end; numbers below are loopback and one Bee node, so network latency is not measured yet.**
+
+- Binding: `yCollab(swarmDoc.doc.getText('main.typ'), null, { undoManager })` on CodeMirror 6 works with no awareness object; typing in one tab appears in the other. Cursors arrive as `AWARENESS_UPDATED` `{ address, username, cursor }` every 500 ms; the remote-selection decorations are ours to draw (design §4.1, as the Monaco example does).
+- Delta latency, Alice → Bob over the WebRTC data channel, Date.now on both sides: 2, 7, 2, 0, 0 ms for five single characters; a 40-character burst arrived character by character with no backlog. Deltas are sent at once; the 500 ms debounce applies to snapshot writes.
+- Cost: Alice's 45 characters over about 60 s caused 6 snapshot writes, each `POST /bytes` + `POST /soc` (one chunk each for a 136-character document), so about 12 chunks per minute of typing; Bob, only reading, wrote nothing. Joining writes 2–3 SOCs (member entry, signalling). Reads: `GET /feeds` every 5 s per peer (member polling), a few `GET /chunks` and `/bytes` on join. On a depth-20 batch this is noise; the debounce can stay at 500 ms.
+- Join and reconnect: a new peer sees the member list in 2 s and the other peer's snapshot in about 10 s; the other peer notices the newcomer within the 5 s poll. The WebRTC channel took 27–65 s to open with both tabs hidden (Chromium throttles timers to once a second in hidden tabs, and signalling polls feeds); measure again with visible tabs and across two networks.
+- Reload (both tabs at once): each peer restored its own last snapshot in 2–5 s and the merged state in 10 s; nothing was lost. Bob's own snapshot held only his edits (31 chars) until Alice's snapshot arrived, so a peer's feed does not carry remote edits; the merge does.
+- `PEERS_CONNECTED` fires once the transport is ready even with zero peers; treat `MEMBERS_UPDATED` as the presence signal.
+- Upstream asks recorded for D-02: publish to npm, ESM entry in `package.json`, `yjs` as a peer dependency (two copies break the CRDT), move Monaco, React and Waku out of `dependencies` (the library bundle is 1.75 MB with Waku inside), a `stamp` hook (dappdata D19), Node 24 engine pin is stricter than needed. Cursor decision: draw remote cursors ourselves from `AWARENESS_UPDATED`.
+- Not yet: two networks, visible-tab reconnect time, multi-file (`getText` per path) in the same session, the `files` map.
 
 ## S6 — One key, two sessions
 
