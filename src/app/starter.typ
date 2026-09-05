@@ -1,4 +1,4 @@
-#set page(paper: "a4", margin: (x: 2cm, y: 1.8cm), numbering: "1")
+#set page(paper: "a4", margin: (x: 2cm, y: 1.5cm), numbering: "1")
 #set text(size: 10.5pt)
 #set par(justify: true)
 #show figure.caption: set text(size: 9pt, fill: luma(60))
