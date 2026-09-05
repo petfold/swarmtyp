@@ -21,7 +21,7 @@ One person, one project, no collaboration yet. Proves the compiler runs from a `
 - PDF export in the browser.
 - `tools/deploy`: upload `dist/` as a collection, advance the release feed.
 
-Milestone M1: open the app at a `bzz` address through a gateway, write a two-file document with an image, see it render, download a PDF. The only network calls are to the Bee node (and the package fallback, if used).
+Milestone M1: open the app at a `bzz` address through a gateway (D-22: today that means a local node or a gateway Solar Punk runs), write a two-file document with an image, see it render, download a PDF. The only network calls are to the Bee node (and the package fallback, if used).
 
 ## Phase 2 — Two people, one document (2–3 weeks)
 

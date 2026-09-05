@@ -93,3 +93,7 @@ Maintenance. Typst GmbH cannot lower it. Three levers can: push features upstrea
 Trademark. "Typst" descriptively, never their logo; the name stays swarmtyp. Read their brand guidelines before the first public post.
 
 Decide before the first public post, after M1 at the earliest.
+
+## D-22 — Who serves the app to users without a Bee node — OPEN
+
+Context (S1, 2026-09-05). The design assumes "a Bee node or gateway". In 2026 no public Swarm gateway renders arbitrary content: `download.gateway.ethswarm.org` forces downloads, `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org` and `bzz.link` allow-list hashes and redirect the rest to a forbidden page, `gateway.ethswarm.org` is a landing page. Reads through them are fine for data (dappdata S2 used them for feeds), not for hosting a page. A user with Swarm Desktop or a light node is unaffected. Options: (a) Solar Punk runs a read gateway for the app bundle, fonts and packages (reads need no stamp; cost is bandwidth), with writes still going to the user's own node or a sponsoring gateway per D-07; (b) ask bzz.link's operator to allow-list swarmtyp's release feed; (c) require a local node (Swarm Desktop) and say so, which excludes the "open a link" onboarding; (d) mirror the release on ordinary web hosting as well, which contradicts D-05 in spirit though not in mechanism. Leaning (a) plus (b); decide before M1 is demonstrated to anyone outside.

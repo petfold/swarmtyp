@@ -20,7 +20,8 @@ Result (2026-09-05, Chromium via a Swarm Desktop Bee 2.8.2 light node on mainnet
 - Relative module URLs and an import map resolve under `/bzz/<ref>/`; the typst.ts ESM build imports its two WASM packages by bare specifier, so a bundler or an import map is required.
 - Timings on the local node (Chromium, hidden tab): fetch 28.3 MB raw WASM 452 ms, `WebAssembly.compile` 89 ms, compiler init 276 ms, three DejaVu faces (1.3 MB) 58 ms, compile of a one-page document 225 ms, renderer WASM fetch 21 ms and init 31 ms, `renderSvg` 27 ms, PDF 169 ms, JS heap 83 MB. From a plain local web server the gzip path fetched and inflated 10.8 MB in 591 ms.
 - `renderToCanvas` on the main thread waits for `requestAnimationFrame`: in a hidden tab the first call took 18 s and 81 s (until a screenshot made the tab visible), the second call 31 ms. Canvas rendering belongs in a worker with `OffscreenCanvas` or must tolerate hidden tabs (S10).
-- Open: a public gateway (`download.gateway.ethswarm.org`, `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org`, `bzz.link` all 404 minutes after upload; `gateway.ethswarm.org` now serves a landing page for any path) — retry once push-sync completes; Firefox (the snap build cannot run headless here; use Playwright in S8).
+- **Public gateways, checked after push-sync completed (about 5 minutes): none renders an app.** `download.gateway.ethswarm.org` serves every file with `Content-Disposition: attachment`, so the browser downloads `index.html` instead of rendering it (it does serve correct types, `Access-Control-Allow-Origin: *`, range requests, no compression; 0.64 MB/s to this machine, so 28 MB raw would take about 45 s and 10.8 MB gzip about 17 s). `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org` and `bzz.link` redirect an unknown hash to `bzz.link/forbidden?hash=…`: they allow-list content. `gateway.ethswarm.org` serves its own landing page for any path. So the second origin in this spike's exit criterion does not exist today without an operator; see D-22.
+- Open: Firefox (the snap build cannot run headless here; use Playwright in S8).
 
 ## S2 — Shadow filesystem, multi-file, incremental compile
 
@@ -51,7 +52,14 @@ Method: find where typst.ts fetches packages (its registry / access-model abstra
 
 Exit: a document importing a package compiles with network access to `packages.typst.org` blocked.
 
-Result: —
+Result (2026-09-05, Chromium, `spikes/s1/site/s3.html`, tarballs on the Swarm Desktop node as `bytes`): **answered.**
+
+- A `PackageRegistry` of about 30 lines does it: `resolve(spec, ctx)` looks the spec up in an index (`preview/<name>/<version>` → Swarm reference), fetches the tarball with a synchronous XHR from the Bee node (`GET /bytes/<ref>`), unpacks it with `ctx.untar` into the `MemoryAccessModel` the compiler was built with (`initOptions.withAccessModel(am)`, `initOptions.withPackageRegistry(registry)`), and returns the directory. The compiler then reads the package files through the access model.
+- Swarm only: `@preview/tiaoma:0.3.0` (461 KB, includes a WASM plugin, which runs) resolved in 139–153 ms and `@preview/oxifmt:1.0.0` (20 KB) in 20 ms from the local node; compile 330–601 ms cold, 3 ms warm because the unpacked files stay in the access model. The QR code rendered.
+- Fallback (D-08): with oxifmt absent from the index, the same registry fetched it from `packages.typst.org` cross-origin in 107 ms; the server sends `access-control-allow-origin: *`. The registry records which source served each package, as T4 asks.
+- Fallback off and package absent: the compile fails with the compiler's own message at the import line, `package not found (searched for @preview/oxifmt:1.0.0)`, which the UI can show as is.
+- Costs: resolution is synchronous, so in the product it runs inside the compile worker, where synchronous XHR is allowed; on the main thread Chromium only warns. The tarball index for the mirror is one JSON or Mantaray lookup per package; the full Universe index is not needed at startup.
+- D-08 can be decided once `tools/mirror` exists; the mechanism is proven.
 
 ## S4 — Fonts from Swarm
 
@@ -61,7 +69,14 @@ Method: inspect the default font loading; upload the Typst default font set as a
 
 Exit: correct rendering with GitHub blocked; a size table per font family.
 
-Result: —
+Result (2026-09-05, Chromium, `spikes/s4/build-index.mjs` + `spikes/s1/site/s4.html`): **answered.**
+
+- Default fonts: typst.ts's `preloadFontAssets` fetches its set from GitHub/jsdelivr; swarmtyp passes `beforeBuild: []` and registers its own faces, so no request leaves for GitHub.
+- Index: a Node script runs `createTypstFontBuilder().getFontInfo(bytes)` per face (family, variant, flags, coverage), uploads each face to Swarm as `bytes`, and writes `fonts-index.json`: seven DejaVu faces, 8.6 KB of index for 3.47 MB of fonts.
+- Lazy registration: `fb.addLazyFont(entry.info, loadFontSync({ info, url: bee + '/bytes/' + ref }))` for all seven took 9 ms and fetched nothing. `loadFontSync` (typst.ts `init.mjs`) does a synchronous XHR on first use, the same pattern as packages (S3).
+- What a document pulls: text with a heading fetched Serif regular and bold (737 KB, 27 and 21 ms from the local node); adding italic and an equation fetched Serif italic and the maths face (924 KB); a second compile fetched nothing. Sans and Mono were never downloaded. Compile times 284 and 307 ms including the fetches, 3 ms warm.
+- Size table (DejaVu, from the index): Serif 381 KB, Serif Bold 357 KB, Serif Italic 347 KB, Sans 760 KB, Sans Bold 709 KB, Sans Mono 343 KB, Math TeX Gyre 577 KB. The Typst default set (Libertinus, New Computer Modern incl. Math 1.4 MB, DejaVu Sans Mono) goes through the same pipeline in `tools/deploy`.
+- Note: the default maths font must be a face with a MATH table; the heading in a text-only document already costs the bold face, which is fine.
 
 ## S5 — swarm-collaborative-docs with CodeMirror 6
 
