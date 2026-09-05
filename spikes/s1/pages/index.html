@@ -1,0 +1,154 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>swarmtyp S1: typst.ts from a Swarm address</title>
+<script type="importmap">
+{ "imports": {
+  "@myriaddreamin/typst-ts-web-compiler": "./compiler/typst_ts_web_compiler.mjs",
+  "@myriaddreamin/typst-ts-renderer": "./renderer/typst_ts_renderer.mjs"
+} }
+</script>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 1rem; color: #222; background: #fafafa; }
+  #log { white-space: pre-wrap; background: #eee; padding: .5rem; font: 12px monospace; }
+  .pane { display: inline-block; vertical-align: top; margin-right: 1rem; border: 1px solid #ccc; background: #fff; }
+  .pane svg { width: 320px; height: auto; display: block; }
+</style>
+<h1>swarmtyp S1</h1>
+<p id="status">loading…</p>
+<pre id="log"></pre>
+<div class="pane" id="svg"></div>
+<div class="pane" id="canvas"></div>
+<p id="pdf"></p>
+<script type="module">
+import { createTypstCompiler, createTypstFontBuilder, createTypstRenderer } from './typst.ts/index.mjs';
+
+const params = new URLSearchParams(location.search);
+const useGz = params.get('gz') === '1';
+const base = new URL('.', location.href);
+const t = {}; const mark = (k, from) => { t[k] = Math.round(performance.now() - from); };
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; console.log('S1 ' + m); };
+const status = (m) => { document.getElementById('status').textContent = m; };
+
+const ranged = params.get('ranged') === '1' || (params.get('ranged') !== '0' && location.protocol === 'bzz:');
+const PIECE = Number(params.get('piece') || 1048576);
+const PARALLEL = Number(params.get('parallel') || 2);
+window.__pieces = [];
+// Fetch a file in Range pieces (Ant truncates whole-file bodies over a few hundred KB; ranges work).
+async function fetchRanged(url, name) {
+  const t0 = performance.now();
+  const head = await fetch(url, { headers: { Range: 'bytes=0-0' } });
+  const ct = head.headers.get('content-type');
+  const cr = head.headers.get('content-range');
+  const total = cr ? Number(cr.split('/')[1]) : Number(head.headers.get('content-length'));
+  if (!total || head.status !== 206) throw new Error(`no range support: status ${head.status}, content-range ${cr}`);
+  const out = new Uint8Array(total);
+  const offsets = []; for (let o = 0; o < total; o += PIECE) offsets.push(o);
+  let next = 0;
+  const worker = async () => {
+    while (next < offsets.length) {
+      const o = offsets[next++]; const end = Math.min(o + PIECE, total) - 1; const tp = performance.now();
+      let buf, tries = 0;
+      for (;;) { try { const r = await fetch(url, { headers: { Range: `bytes=${o}-${end}` } }); if (r.status !== 206) throw new Error('status ' + r.status); buf = new Uint8Array(await r.arrayBuffer()); if (buf.length !== end - o + 1) throw new Error(`short piece ${buf.length}`); break; } catch (e) { if (++tries > 5) throw e; log(`  piece ${o}: retry ${tries} after ${e.message}`); } }
+      out.set(buf, o); const ms = Math.round(performance.now() - tp); window.__pieces.push({ o, bytes: buf.length, ms, tries });
+      if (window.__pieces.length % 3 === 1) log(`  ${name}: ${Math.round((o + buf.length) / total * 100)}% (${window.__pieces.length}/${offsets.length} pieces, last ${ms} ms)`);
+    }
+  };
+  await Promise.all(Array.from({ length: PARALLEL }, worker));
+  const ms = Math.round(performance.now() - t0);
+  log(`${name}: ${total} bytes in ${offsets.length} ranged pieces of ${PIECE} (${PARALLEL} parallel), ${ms} ms = ${Math.round(total / ms)} KB/s, content-type=${ct}`);
+  return { bytes: out, ct, ms };
+}
+async function fetchWasm(name, gz) {
+  const t0 = performance.now();
+  const url = new URL(gz ? name + '.gz' : name, base);
+  if (ranged) {
+    const { bytes: raw, ct } = await fetchRanged(url, name + (gz ? '.gz' : ''));
+    let bytes = raw;
+    if (gz && raw[0] === 0x1f && raw[1] === 0x8b) bytes = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+    mark('fetch_' + name, t0);
+    log(`${name}${gz ? '.gz' : ''}: ${gz ? 'inflated to ' : ''}${bytes.length} bytes, content-type=${ct}, ${t['fetch_' + name]} ms (ranged)`);
+    return bytes;
+  }
+  if (!gz) {
+    const res = await fetch(url);
+    const ct = res.headers.get('content-type'); const bytes = new Uint8Array(await res.arrayBuffer());
+    mark('fetch_' + name, t0);
+    log(`${name}: ${bytes.length} bytes, content-type=${ct}, ${t['fetch_' + name]} ms`);
+    return bytes;
+  }
+  const res = await fetch(url);
+  const ct = res.headers.get('content-type'); const ce = res.headers.get('content-encoding');
+  let stream = res.body;
+  if (!ce) stream = stream.pipeThrough(new DecompressionStream('gzip'));
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  mark('fetch_' + name, t0);
+  log(`${name}.gz: inflated to ${bytes.length} bytes, content-type=${ct}, content-encoding=${ce}, ${t['fetch_' + name]} ms`);
+  return bytes;
+}
+
+try {
+  const tStart = performance.now();
+  status(`fetching compiler WASM (${useGz ? 'gzip + DecompressionStream' : 'raw'})…`);
+  const compilerBytes = await fetchWasm('compiler/typst_ts_web_compiler_bg.wasm', useGz);
+  let t0 = performance.now();
+  const compilerModule = await WebAssembly.compile(compilerBytes); mark('wasmCompile', t0);
+  log(`WebAssembly.compile: ${t.wasmCompile} ms`);
+
+  status('initialising compiler…'); t0 = performance.now();
+  const compiler = createTypstCompiler();
+  await compiler.init({ getModule: () => compilerModule, beforeBuild: [] }); mark('compilerInit', t0);
+  log(`compiler init: ${t.compilerInit} ms`);
+
+  status('loading fonts…'); t0 = performance.now();
+  const fb = createTypstFontBuilder(); await fb.init({ getModule: () => compilerModule });
+  let fontBytes = 0;
+  for (const f of ['DejaVuSerif.ttf', 'DejaVuSerif-Bold.ttf', 'DejaVuMathTeXGyre.ttf']) {
+    const b = new Uint8Array(await (await fetch(new URL('fonts/' + f, base))).arrayBuffer()); fontBytes += b.length; await fb.addFontData(b);
+  }
+  await fb.build(async (r) => compiler.setFonts(r)); mark('fonts', t0);
+  log(`fonts: ${fontBytes} bytes, ${t.fonts} ms`);
+
+  status('compiling…'); t0 = performance.now();
+  compiler.addSource('/main.typ', `#set page(width: 10cm, height: 7cm, margin: 8mm)
+#set text(font: "DejaVu Serif", size: 10pt)
+#show math.equation: set text(font: "DejaVu Math TeX Gyre")
+= Hello from Swarm
+Compiled in the browser by Typst #sys.version (typst.ts 0.7.0), served from #raw(str(sys.inputs.at("origin", default: "?"))).
+$ integral_0^1 x^2 dif x = 1/3 $
+#context [#metadata(str(sys.version)) <v>]`);
+  const r = await compiler.compile({ mainFilePath: '/main.typ', diagnostics: 'full', inputs: { origin: location.origin + location.pathname } });
+  mark('compile', t0);
+  log(`compile: ${t.compile} ms, artifact ${r.result?.length} bytes, diagnostics ${JSON.stringify(r.diagnostics || [])}`);
+
+  status('rendering…');
+  const rendererBytes = await fetchWasm('renderer/typst_ts_renderer_bg.wasm', false);
+  t0 = performance.now();
+  const renderer = createTypstRenderer(); await renderer.init({ getModule: () => rendererBytes }); mark('rendererInit', t0);
+  t0 = performance.now();
+  const svg = await renderer.renderSvg({ artifactContent: r.result, format: 'vector' }); mark('renderSvg', t0);
+  document.getElementById('svg').innerHTML = svg;   // spike only; the product sanitises (T5)
+  log(`renderSvg: ${t.renderSvg} ms, ${svg.length} chars`);
+  t0 = performance.now();
+  await renderer.renderToCanvas({ container: document.getElementById('canvas'), artifactContent: r.result, format: 'vector', pixelPerPt: 2 }); mark('renderCanvas', t0);
+  log(`renderToCanvas: ${t.renderCanvas} ms, canvases ${document.querySelectorAll('#canvas canvas').length}`);
+  t0 = performance.now();
+  await renderer.renderToCanvas({ container: document.getElementById('canvas'), artifactContent: r.result, format: 'vector', pixelPerPt: 2 }); mark('renderCanvas2', t0);
+  log(`renderToCanvas (second call): ${t.renderCanvas2} ms`);
+  window.__renderer = renderer; window.__compiler = compiler; window.__artifact = r.result;
+
+  t0 = performance.now();
+  const pdf = await compiler.compile({ mainFilePath: '/main.typ', format: 1, diagnostics: 'full' }); mark('pdf', t0);
+  const blob = new Blob([pdf.result], { type: 'application/pdf' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'swarmtyp-s1.pdf'; a.textContent = `PDF ${pdf.result?.length} bytes (${t.pdf} ms)`;
+  document.getElementById('pdf').append(a);
+
+  mark('total', tStart);
+  const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null;
+  const result = { origin: location.origin, path: location.pathname, gz: useGz, ranged, piece: PIECE, parallel: PARALLEL, pieces: window.__pieces.length, timings: t, artifactBytes: r.result?.length, pdfBytes: pdf.result?.length, jsHeapMB: mem, ua: navigator.userAgent.slice(0, 80) };
+  window.__s1 = result;
+  status(`done in ${t.total} ms`);
+  log('RESULT ' + JSON.stringify(result));
+} catch (e) {
+  status('FAILED: ' + e.message); log('ERROR ' + (e.stack || e)); console.error(e);
+}
+</script>

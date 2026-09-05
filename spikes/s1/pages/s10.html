@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>swarmtyp S10: canvas vs SVG renderer</title>
+<script type="importmap">
+{ "imports": {
+  "@myriaddreamin/typst-ts-web-compiler": "./compiler/typst_ts_web_compiler.mjs",
+  "@myriaddreamin/typst-ts-renderer": "./renderer/typst_ts_renderer.mjs"
+} }
+</script>
+<style> body { font: 14px system-ui, sans-serif; margin: 1rem; } #log { white-space: pre-wrap; background: #eee; padding: .5rem; font: 12px monospace; } #svgpane svg { width: 200px; height: auto; margin: 2px; border: 1px solid #ccc; } #canvaspane canvas { width: 200px; height: auto; margin: 2px; border: 1px solid #ccc; } </style>
+<h1>swarmtyp S10: 22 pages, SVG vs canvas</h1>
+<p id="status">loading…</p>
+<pre id="log"></pre>
+<div id="svgpane"></div>
+<div id="canvaspane"></div>
+<script type="module">
+import { createTypstCompiler, createTypstFontBuilder, createTypstRenderer } from './typst.ts/index.mjs';
+const base = new URL('.', location.href);
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; console.log('S10 ' + m); };
+const status = (m) => { document.getElementById('status').textContent = m; };
+const mem = () => performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null;
+const chapter = (title, n, seed) => `= ${title}\n` + Array.from({ length: n }, (_, i) =>
+  `== Section ${i + 1}\n#lorem(${180 + ((i * 37 + seed) % 90)})\n\n$ sum_(k=1)^n k^${(i % 3) + 1} = O(n^${(i % 3) + 2}) $\n\n#lorem(${120 + ((i * 53 + seed) % 80)})\n`).join('\n');
+try {
+  const wasm = await WebAssembly.compile(await (await fetch(new URL('compiler/typst_ts_web_compiler_bg.wasm', base))).arrayBuffer());
+  const compiler = createTypstCompiler(); await compiler.init({ getModule: () => wasm, beforeBuild: [] });
+  const fb = createTypstFontBuilder(); await fb.init({ getModule: () => wasm });
+  for (const f of ['DejaVuSerif.ttf', 'DejaVuSerif-Bold.ttf', 'DejaVuMathTeXGyre.ttf']) await fb.addFontData(new Uint8Array(await (await fetch(new URL('fonts/' + f, base))).arrayBuffer()));
+  await fb.build(async (r) => compiler.setFonts(r));
+  compiler.addSource('/main.typ', `#set text(font: "DejaVu Serif", size: 10pt)\n#set page(paper: "a4", numbering: "1")\n#set heading(numbering: "1.1")\n#show math.equation: set text(font: "DejaVu Math TeX Gyre")\n#outline()\n#include "/chapters/one.typ"\n#include "/chapters/two.typ"\n#figure(table(columns: 3, [a], [b], [c], [1], [2], [3]), caption: [A table])`);
+  compiler.addSource('/chapters/one.typ', chapter('Chapter one', 14, 3));
+  compiler.addSource('/chapters/two.typ', chapter('Chapter two', 14, 11));
+  let t0 = performance.now();
+  const r = await compiler.compile({ mainFilePath: '/main.typ', diagnostics: 'full' });
+  log(`compile: ${Math.round(performance.now() - t0)} ms, artifact ${r.result.length} bytes, heap ${mem()} MB, diagnostics ${(r.diagnostics || []).length}`);
+  const renderer = createTypstRenderer(); await renderer.init({ getModule: () => new URL('renderer/typst_ts_renderer_bg.wasm', base) });
+  const out = { artifactBytes: r.result.length };
+
+  // --- SVG: one string for the whole document, then DOM insertion ---
+  t0 = performance.now();
+  const svg = await renderer.renderSvg({ artifactContent: r.result, format: 'vector' });
+  out.svg = { renderMs: Math.round(performance.now() - t0), chars: svg.length };
+  t0 = performance.now();
+  document.getElementById('svgpane').innerHTML = svg;
+  out.svg.insertMs = Math.round(performance.now() - t0);
+  out.svg.heapMB = mem();
+  log(`SVG: render ${out.svg.renderMs} ms, ${svg.length} chars, DOM insert ${out.svg.insertMs} ms, heap ${out.svg.heapMB} MB, pages in svg: ${(svg.match(/class="typst-page"/g) || []).length}`);
+
+  // --- Canvas: one session, one canvas per page, explicit pixelPerPt ---
+  const renderAll = async (ppp) => {
+    const pane = document.getElementById('canvaspane'); pane.innerHTML = '';
+    const t = performance.now(); let pixelBytes = 0; let pages;
+    await renderer.runWithSession(async (session) => {
+      renderer.manipulateData({ renderSession: session, action: 'reset', data: r.result });
+      session.pixelPerPt = ppp; session.backgroundColor = '#ffffff';
+      pages = renderer.retrievePagesInfoFromSession(session);
+      if (ppp === 2) log(`pages: ${pages.length}, first page info: ${JSON.stringify(pages[0]).slice(0, 200)}`);
+      for (let i = 0; i < pages.length; i++) {
+        const p = pages[i]; const w = Math.ceil((p.width ?? 595) * ppp), h = Math.ceil((p.height ?? 842) * ppp);
+        const c = document.createElement('canvas'); c.width = w; c.height = h; pane.append(c); pixelBytes += w * h * 4;
+        await renderer.renderCanvas({ renderSession: session, canvas: c.getContext('2d'), pageOffset: i, pixelPerPt: ppp, backgroundColor: '#ffffff', dataSelection: { body: true, semantics: false } });
+        if (i === 0 && ppp === 2) log(`   first page rendered after ${Math.round(performance.now() - t)} ms`);
+      }
+    });
+    return { pixelPerPt: ppp, pages: pages.length, ms: Math.round(performance.now() - t), pixelMB: Math.round(pixelBytes / 1048576), heapMB: mem() };
+  };
+  out.canvas2 = await renderAll(2); log(`canvas @2 px/pt: ${JSON.stringify(out.canvas2)}`);
+  out.canvas3 = await renderAll(3); log(`canvas @3 px/pt (zoom rerender): ${JSON.stringify(out.canvas3)}`);
+  out.canvas2again = await renderAll(2); log(`canvas @2 again: ${JSON.stringify(out.canvas2again)}`);
+  out.visibility = document.visibilityState;
+  window.__s10 = out; status('done'); log('RESULT ' + JSON.stringify(out));
+} catch (e) { status('FAILED: ' + e.message); log('ERROR ' + (e.stack || e)); }
+</script>

@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>swarmtyp S4: lazy fonts from Swarm</title>
+<script type="importmap">
+{ "imports": {
+  "@myriaddreamin/typst-ts-web-compiler": "./compiler/typst_ts_web_compiler.mjs",
+  "@myriaddreamin/typst-ts-renderer": "./renderer/typst_ts_renderer.mjs"
+} }
+</script>
+<style> body { font: 14px system-ui, sans-serif; margin: 1rem; } #log { white-space: pre-wrap; background: #eee; padding: .5rem; font: 12px monospace; } .pane svg { width: 380px; height: auto; border: 1px solid #ccc; margin-right: 1rem; } </style>
+<h1>swarmtyp S4: fonts registered lazily, fetched from Swarm on first use</h1>
+<p id="status">loading…</p>
+<pre id="log"></pre>
+<span class="pane" id="a"></span><span class="pane" id="b"></span>
+<script type="module">
+import { createTypstCompiler, createTypstFontBuilder, createTypstRenderer } from './typst.ts/index.mjs';
+import { loadFontSync } from './typst.ts/init.mjs';
+const params = new URLSearchParams(location.search);
+const beeUrl = params.get('bee') || 'http://127.0.0.1:1633';
+const base = new URL('.', location.href);
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; console.log('S4 ' + m); };
+const status = (m) => { document.getElementById('status').textContent = m; };
+
+// Record every synchronous XHR the lazy fonts perform.
+const fetched = [];
+const origOpen = XMLHttpRequest.prototype.open, origSend = XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.open = function (m, url, ...rest) { this.__url = String(url); this.__t0 = performance.now(); return origOpen.call(this, m, url, ...rest); };
+XMLHttpRequest.prototype.send = function (...a) { const r = origSend.apply(this, a); if (this.readyState === 4) fetched.push({ url: this.__url.replace(beeUrl, ''), bytes: this.response?.length ?? this.responseText?.length, ms: Math.round(performance.now() - this.__t0) }); return r; };
+
+try {
+  const index = await (await fetch(new URL('fonts-index.json', base))).json();
+  log(`font index: ${index.length} faces, ${JSON.stringify(index).length} bytes; total font bytes if all loaded: ${index.reduce((a, e) => a + e.bytes, 0)}`);
+  const wasm = await WebAssembly.compile(await (await fetch(new URL('compiler/typst_ts_web_compiler_bg.wasm', base))).arrayBuffer());
+  const compiler = createTypstCompiler(); await compiler.init({ getModule: () => wasm, beforeBuild: [] });
+  const fb = createTypstFontBuilder(); await fb.init({ getModule: () => wasm });
+  let t0 = performance.now();
+  for (const e of index) {
+    const url = `${beeUrl}/bytes/${e.ref}`;
+    await fb.addLazyFont(e.info, loadFontSync({ info: e.info, url }));
+  }
+  await fb.build(async (r) => compiler.setFonts(r));
+  log(`registered ${index.length} lazy faces in ${Math.round(performance.now() - t0)} ms; fetched so far: ${fetched.length}`);
+
+  const renderer = createTypstRenderer(); await renderer.init({ getModule: () => new URL('renderer/typst_ts_renderer_bg.wasm', base) });
+  const run = async (label, src, pane) => {
+    const before = fetched.length;
+    compiler.addSource('/main.typ', src);
+    const t = performance.now();
+    const r = await compiler.compile({ mainFilePath: '/main.typ', diagnostics: 'full' });
+    const ms = Math.round(performance.now() - t);
+    const got = fetched.slice(before);
+    log(`${label}: compile ${ms} ms, faces fetched ${got.length} (${got.reduce((a, f) => a + (f.bytes || 0), 0)} bytes), diagnostics ${JSON.stringify(r.diagnostics || [])}`);
+    for (const f of got) log(`   ${f.url} ${f.bytes} bytes ${f.ms} ms`);
+    if (r.result) document.getElementById(pane).innerHTML = await renderer.renderSvg({ artifactContent: r.result, format: 'vector' });
+    return { ms, fetched: got };
+  };
+  const a = await run('A text only (DejaVu Serif regular)', `#set page(width: 9cm, height: 5cm, margin: 6mm)\n#set text(font: "DejaVu Serif")\n= Plain text\nOnly one face should be fetched for this paragraph.`, 'a');
+  const b = await run('B bold + italic + maths', `#set page(width: 9cm, height: 5cm, margin: 6mm)\n#set text(font: "DejaVu Serif")\n#show math.equation: set text(font: "DejaVu Math TeX Gyre")\n= *Bold* and _italic_\nWith an equation: $ sum_(k=1)^n k = (n(n+1))/2 $`, 'b');
+  const c = await run('C same as B again', `#set page(width: 9cm, height: 5cm, margin: 6mm)\n#set text(font: "DejaVu Serif")\n#show math.equation: set text(font: "DejaVu Math TeX Gyre")\n= *Bold* and _italic_\nWith an equation: $ sum_(k=1)^n k = (n(n+1))/2 $ and more.`, 'b');
+  const result = { beeUrl, faces: index.length, indexBytes: JSON.stringify(index).length, A: a, B: b, C: c, allFetched: fetched };
+  window.__s4 = result; status('done'); log('RESULT ' + JSON.stringify(result));
+} catch (e) { status('FAILED: ' + e.message); log('ERROR ' + (e.stack || e)); }
+</script>

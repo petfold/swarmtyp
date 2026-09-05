@@ -1,0 +1,93 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>swarmtyp S3: packages from Swarm</title>
+<script type="importmap">
+{ "imports": {
+  "@myriaddreamin/typst-ts-web-compiler": "./compiler/typst_ts_web_compiler.mjs",
+  "@myriaddreamin/typst-ts-renderer": "./renderer/typst_ts_renderer.mjs"
+} }
+</script>
+<style> body { font: 14px system-ui, sans-serif; margin: 1rem; } #log { white-space: pre-wrap; background: #eee; padding: .5rem; font: 12px monospace; } #svg svg { width: 420px; height: auto; border: 1px solid #ccc; } </style>
+<h1>swarmtyp S3: package resolution from Swarm</h1>
+<p id="status">loading…</p>
+<pre id="log"></pre>
+<div id="svg"></div>
+<script type="module">
+import { createTypstCompiler, createTypstFontBuilder, createTypstRenderer, MemoryAccessModel, initOptions } from './typst.ts/index.mjs';
+const params = new URLSearchParams(location.search);
+const beeUrl = params.get('bee') || 'http://127.0.0.1:1633';
+const allowFallback = params.get('fallback') !== '0';
+// The mirror index: preview/<name>/<version> → Swarm reference of the tarball (bytes). Hard-coded for the spike.
+const index = { 'preview/tiaoma/0.3.0': '047a2cb0f3c20e4266f10a8ab6db5701aabdca4bab12d3abdb601d6ae70f0a35' };
+if (params.get('oxifmt')) index['preview/oxifmt/' + (params.get('oxifmtVersion') || '1.0.0')] = params.get('oxifmt');
+const base = new URL('.', location.href);
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; console.log('S3 ' + m); };
+const status = (m) => { document.getElementById('status').textContent = m; };
+const resolved = [];
+
+function syncGet(url) {
+  const t0 = performance.now();
+  const xhr = new XMLHttpRequest();
+  xhr.overrideMimeType('text/plain; charset=x-user-defined');
+  xhr.open('GET', url, false); xhr.send(null);
+  if (xhr.status !== 200) throw new Error(`GET ${url} → ${xhr.status}`);
+  const bytes = Uint8Array.from(xhr.response, (c) => c.charCodeAt(0));
+  return { bytes, ms: Math.round(performance.now() - t0) };
+}
+
+class SwarmPackageRegistry {
+  constructor(am) { this.am = am; this.cache = new Map(); }
+  resolve(spec, ctx) {
+    const key = `${spec.namespace}/${spec.name}/${spec.version}`;
+    if (this.cache.has(key)) return this.cache.get(key);
+    const dir = `/@memory/swarm/packages/${key}`;
+    let source, got;
+    try {
+      if (index[key]) { source = 'swarm'; got = syncGet(`${beeUrl}/bytes/${index[key]}`); }
+      else if (allowFallback && spec.namespace === 'preview') { source = 'packages.typst.org'; got = syncGet(`https://packages.typst.org/preview/${spec.name}-${spec.version}.tar.gz`); }
+      else { resolved.push({ key, source: 'none' }); log(`resolve ${key}: not in index, fallback off`); return undefined; }
+    } catch (e) { resolved.push({ key, source, error: e.message }); log(`resolve ${key} from ${source} FAILED: ${e.message}`); return undefined; }
+    let files = 0;
+    ctx.untar(got.bytes, (path, data, mtime) => { this.am.insertFile(`${dir}/${path}`, data, new Date(mtime)); files++; });
+    resolved.push({ key, source, bytes: got.bytes.length, files, ms: got.ms });
+    log(`resolve ${key} from ${source}: ${got.bytes.length} bytes, ${files} files, ${got.ms} ms`);
+    this.cache.set(key, dir);
+    return dir;
+  }
+}
+
+try {
+  status('loading compiler…');
+  const wasm = await WebAssembly.compile(await (await fetch(new URL('compiler/typst_ts_web_compiler_bg.wasm', base))).arrayBuffer());
+  const am = new MemoryAccessModel();
+  const registry = new SwarmPackageRegistry(am);
+  const compiler = createTypstCompiler();
+  await compiler.init({ getModule: () => wasm, beforeBuild: [initOptions.withAccessModel(am), initOptions.withPackageRegistry(registry)] });
+  const fb = createTypstFontBuilder(); await fb.init({ getModule: () => wasm });
+  for (const f of ['DejaVuSerif.ttf', 'DejaVuSerif-Bold.ttf']) await fb.addFontData(new Uint8Array(await (await fetch(new URL('fonts/' + f, base))).arrayBuffer()));
+  await fb.build(async (r) => compiler.setFonts(r));
+
+  status('compiling with @preview imports…');
+  compiler.addSource('/main.typ', `#set page(width: 10cm, height: 8cm, margin: 8mm)
+#set text(font: "DejaVu Serif", size: 10pt)
+#import "@preview/tiaoma:0.3.0": qrcode
+#import "@preview/oxifmt:${params.get('oxifmtVersion') || '1.0.0'}": strfmt
+= Packages on Swarm
+tiaoma (WASM plugin) and oxifmt (pure Typst): #strfmt("{}/{:02}", 3, 4)
+#align(center, qrcode("bzz://swarmtyp", width: 3cm))`);
+  const t0 = performance.now();
+  const r = await compiler.compile({ mainFilePath: '/main.typ', diagnostics: 'full' });
+  const compileMs = Math.round(performance.now() - t0);
+  log(`compile: ${compileMs} ms, artifact ${r.result?.length} bytes, diagnostics ${JSON.stringify(r.diagnostics || [])}`);
+  const t1 = performance.now();
+  const r2 = await compiler.compile({ mainFilePath: '/main.typ', diagnostics: 'full' });
+  log(`second compile (packages cached in access model): ${Math.round(performance.now() - t1)} ms`);
+  if (r.result) {
+    const renderer = createTypstRenderer(); await renderer.init({ getModule: () => new URL('renderer/typst_ts_renderer_bg.wasm', base) });
+    document.getElementById('svg').innerHTML = await renderer.renderSvg({ artifactContent: r.result, format: 'vector' });
+  }
+  const result = { beeUrl, allowFallback, resolved, compileMs, secondCompileMs: Math.round(performance.now() - t1), diagnostics: r.diagnostics, ok: !!r.result };
+  window.__s3 = result; status(result.ok ? 'done' : 'compile failed');
+  log('RESULT ' + JSON.stringify(result));
+} catch (e) { status('FAILED: ' + e.message); log('ERROR ' + (e.stack || e)); }
+</script>
