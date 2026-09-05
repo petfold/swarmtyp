@@ -6,7 +6,7 @@ Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
 
 ## Status
 
-Design only, 2026-09-05 (competitor analysis added). No code. Next step: Phase 0 spikes in `docs/spikes.md`.
+Phase 0 spikes run 2026-09-05, results in `docs/spikes.md` (throwaway code under `spikes/`). No product code. Next step: the owner closes D-03, D-04, D-17 and answers D-22 (`docs/plan.md`, Phase 0 status); then Phase 1.
 
 ## Read in this order
 

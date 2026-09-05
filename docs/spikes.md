@@ -105,7 +105,9 @@ Method: open the same project twice with the same key; edit in both; observe the
 
 Exit: a description of the failure (if any) and the mitigation swarmtyp will use; an upstream issue or PR if the fix belongs in the library.
 
-Result: —
+Result (2026-09-05, a third tab with Alice's key as "Alice2", `spikes/s5/app`): **silent divergence, no error.** The member list is keyed by address, so neither Bob nor the first Alice tab sees a new member and Alice2 sees only Bob; Alice2 never gets a WebRTC channel (`<topic>_signal` records for one address collide) and `PEERS_CONNECTED` never fires; both Alice tabs write snapshots to the same `<topic>_doc<address>` feed with independent index counters. After each Alice tab typed once, all three documents were 147 characters long with three different contents: Alice1 and Bob held "[A1 edit]", Alice2 held "[A2 edit]"; no `DOC_ERROR` anywhere. T11 confirmed.
+
+Mitigation swarmtyp will use: a per-session signing key derived from the identity key plus a random session id (dappdata's D17 sub-key pattern), so every session owns its own `_doc` and `_signal` feeds; the nickname stays the same and the UI groups addresses by identity. Cost: the member list grows by one entry per session and a joiner reads one snapshot per entry, so stale entries need pruning. Upstream (D-02): a `sessionId` in `DocSettings` that suffixes the doc and signal feed names while members are keyed by identity, and a `DOC_ERROR` when a feed write lands on an index that already exists.
 
 ## S7 — Bee from the browser
 
@@ -115,7 +117,7 @@ Method: list endpoint calls from S1–S5 logs; test CORS with the local node's d
 
 Exit: a table of endpoints × origin × works/needs config; a stamping plan for the gateway mode.
 
-Result (partial, 2026-09-05): Swarm Desktop's Bee 2.8.2 answers cross-origin requests from any origin (`Access-Control-Allow-Origin` echoes the request origin, credentials allowed, all Swarm headers listed, preflight 204), so a `bzz`-hosted page can call the local node without configuration. Endpoints used so far: `POST /bzz` (collection upload, 42 MB in 30 s), `GET /bzz/<ref>/<path>`, `GET /stamps`, `GET /health`, `GET /tags`. dappdata's D3/D12 add `POST /soc` for client-side stamped writes.
+Result (partial, 2026-09-05): Swarm Desktop's Bee 2.8.2 answers cross-origin requests from any origin (`Access-Control-Allow-Origin` echoes the request origin, credentials allowed, all Swarm headers listed, preflight 204), so a `bzz`-hosted page can call the local node without configuration. Endpoints used so far, all cross-origin from a `bzz` or Vite origin against the Desktop node: `POST /bzz` (collection upload, 42 MB in 30 s), `GET /bzz/<ref>/<path>`, `POST /bytes` and `GET /bytes/<ref>` (packages, fonts, snapshots), `POST /soc` and `GET /feeds` (the collaboration library's feeds), `GET /chunks`, `GET /stamps`, `GET /health`, `GET /tags`. Stamping plan for users without a node: dappdata's D3/D12 model (batch owned by a derived key, stamps signed in the browser, uploaded through any CORS-enabled node) once swarm-collaborative-docs accepts a stamp hook; until then the sponsoring-gateway mode of D-07. No public gateway renders apps today (D-22).
 
 ## S8 — Deploy pipeline and first load
 
@@ -135,7 +137,7 @@ Method: extend S2; call the PDF exporter; save the file; open it.
 
 Exit: a valid PDF and a timing.
 
-Result (partial, 2026-09-05, Node): `compile({ format: 1 })` on the S2 22-page document with an image produced a valid PDF-1.7 of 190 KB in 154 ms (`spikes/s2/out.pdf`). Remaining: the same call from the worker in the browser (S1 page).
+Result (2026-09-05): **answered.** Node: `compile({ format: 1 })` on the S2 22-page document with an image produced a valid PDF-1.7 of 190 KB in 154 ms (`spikes/s2/out.pdf`). Browser (S1 page from the `bzz` address): the one-page document exported a 25.6 KB PDF in 169 ms, offered as a download link. Not yet from inside a worker, which changes nothing about the call.
 
 ## S10 — Preview renderer: canvas vs SVG (D-17)
 

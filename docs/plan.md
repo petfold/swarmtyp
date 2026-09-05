@@ -1,12 +1,21 @@
 # Plan
 
-Phases, each with a milestone you can demonstrate. Dates are effort guesses, not commitments. Current position: **before Phase 0**.
+Phases, each with a milestone you can demonstrate. Dates are effort guesses, not commitments. Current position: **Phase 0, spikes run on 2026-09-05; waiting for the decisions below.**
 
 ## Phase 0 — Spikes (1–2 weeks)
 
 Answer the questions in `spikes.md`. No product code. Throwaway scripts live in `spikes/` and may be deleted afterwards; the *results* go into `spikes.md` and, where they change the design, into `design.md` and `decisions.md`.
 
 Done when: every spike has a recorded result and D-03, D-04, D-08, D-17 have moved from PROPOSED/OPEN to DECIDED.
+
+**Status 2026-09-05.** Answered: S2, S3, S4, S5, S6, S9, S10 (results in `spikes.md`). S1 answered for the local node; the public-gateway half cannot be run because no public gateway renders apps (D-22), and Firefox waits for Playwright. S7 and S8 partial: endpoints and CORS known, WASM compression path proven, no deploy script yet and no gateway timings. Proposed closures for the owner:
+
+- D-03 → DECIDED. CodeMirror 6 with `y-codemirror.next` binds to `SwarmDoc.doc` with no awareness object; remote cursors are ours to draw (S5); typst.app uses the same pair.
+- D-04 → DECIDED. typst.ts 0.7.0 covers everything the design needs: shadow filesystem, synchronous package registry, lazy fonts, incremental compile, PDF, semantic tokens (S2–S4, S9). Keep the wrapper thin; file the renderer panic and the `loadFonts` no-op upstream; it embeds Typst 0.14.2 while typst.app runs 0.15.1.
+- D-08: keep as written; the mechanism and the fallback both work (S3); decide the default after `tools/mirror` exists.
+- D-17 → canvas for the visible pages, SVG for export and print-quality zoom (S10).
+- D-22 needs an answer before M1 is shown to anyone without a Bee node.
+- S6 fixes T11 with a per-session sub-key; the upstream `sessionId` ask goes to swarm-collaborative-docs (D-02).
 
 ## Phase 1 — Solo editor on Swarm (2–3 weeks)
 
