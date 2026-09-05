@@ -15,7 +15,7 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
   await sleep(3000); log('ant ready after', `${Date.now() - t0} ms`);
   const evalWv = (script) => win.evaluate(async (s) => { const wv = document.querySelector('webview:not(.hidden)'); if (!wv || typeof wv.executeJavaScript !== 'function') return undefined; try { return await wv.executeJavaScript(s); } catch (e) { return 'ERR ' + e.message; } }, script);
   const go = async (url) => { const input = win.locator('[data-test="address-input"]'); await input.click(); await input.fill(url); await input.press('Enter'); log('navigated to', url); };
-  const url = `bzz://${REF}/`; await go(url); const tNav = Date.now();
+  const url = REF.includes(".") ? `bzz://${REF}/` : `bzz://${REF}/`; await go(url); const tNav = Date.now();
   let last = '';
   for (let i = 0; i < 90; i++) {
     await sleep(3000);

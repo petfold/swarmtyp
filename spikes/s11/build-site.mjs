@@ -9,7 +9,7 @@ const srv = spawn('python3', ['-m', 'http.server', '8711', '--bind', '127.0.0.1'
 await new Promise((r) => setTimeout(r, 1000));
 try {
   const browser = await chromium.launch(); const page = await browser.newPage();
-  await page.goto('http://127.0.0.1:8711/s11.html');
+  await page.goto('http://127.0.0.1:8711/s11.html' + (process.env.REV ? `?rev=${process.env.REV}` : ''));
   await page.waitForFunction(() => window.__s11, null, { timeout: 120000 });
   const out = await page.evaluate(() => window.__s11); await browser.close();
   if (out.error) throw new Error(out.error);
