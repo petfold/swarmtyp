@@ -136,4 +136,14 @@ Method: extend S2. Render the same 20-page document both ways; measure time from
 
 Exit: a table (renderer × metric); a recommendation for D-17.
 
-Result: —
+Result (2026-09-05, Chromium, main thread, hidden tab, `spikes/s1/site/s10.html`, the S2 22-page A4 document, artifact 224 KB):
+
+| Renderer | Produce | Put on screen | Memory | Zoom |
+|---|---|---|---|---|
+| SVG (`renderSvg`, whole document) | 173 ms, 4.7 MB of SVG text | `innerHTML` 0.85–1.2 s for 22 pages | JS heap +25 MB; DOM holds 4.7 MB of markup | free, vector |
+| Canvas (`renderCanvas` per page, one session) | first page after 97–141 ms; 22 pages in 2.6–4.2 s (about 120–190 ms per page) | immediate per page | 168 MB of pixels at 2 px/pt, 379 MB at 3 px/pt (22 canvases) | re-render, 3.0 s for 22 pages at 3 px/pt |
+
+- Both modes must render only the pages in view. The SVG string for a long document is too big to insert whole, and canvases for every page do not fit in memory; per visible page, canvas costs about 120 ms and SVG about 8 ms plus insertion. The renderer also offers `renderSvgDiff` and session `manipulateData({ action: 'merge' })` for the S2 incremental deltas, not measured here.
+- `renderToCanvas` (the convenience call) renders every page inside `requestAnimationFrame` and adds a DOM text layer for selection; in a hidden tab it stalls until the tab is shown (S1). Per-page `renderCanvas` with an explicit 2D context does not wait for a frame.
+- Upstream bug: `renderCanvas` accepts `HTMLCanvasElement | CanvasRenderingContext2D` by its types, but an element makes the WASM panic (`RuntimeError: unreachable`); pass `canvas.getContext('2d')`. Also set `session.pixelPerPt` and `session.backgroundColor` as typst.ts's own code does.
+- Recommendation for D-17: canvas for the live preview of visible pages (2–3 pages, about 300 ms after a compile, no markup reaches the DOM), rendered in a worker with `OffscreenCanvas` (`TypstWorker.renderCanvas` exists) so hidden tabs and the main thread stop mattering; SVG for export and for a print-quality zoom. Confirm with Firefox before closing.
