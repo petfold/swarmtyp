@@ -1,7 +1,9 @@
 // M2 check in Freedom Browser (D-22): Alice shares a project from Chromium through the Bee node; Freedom opens the same
 // link over bzz:// (app through its bundled Ant, writes through the Bee node on 1633 set in Settings); edits converge
 // both ways. Usage: REF=<release ref> node spikes/freedom/run-collab.cjs   (needs .env.local with VITE_STAMP)
-const { _electron: electron, chromium } = require('@playwright/test');
+// One Playwright only (two copies in one process is refused): Freedom's, which finds its Electron; Chromium comes from swarmtyp's install.
+const { _electron: electron, chromium } = require('/home/test/projects/freedom-browser/node_modules/playwright');
+const CHROMIUM = process.env.CHROMIUM || '/home/test/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome';
 const fs = require('fs'); const os = require('os'); const path = require('path'); const { execSync } = require('child_process');
 const repo = '/home/test/projects/freedom-browser';
 const REF = process.env.REF || 'b656fac57eb02756af40279cf70275969c9f9219818af7cceee34101f169a100';
@@ -13,7 +15,7 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
 const settings = (name) => JSON.stringify({ beeUrl: BEE, stamp: STAMP, nickname: name });
 (async () => {
   // 1. Alice in Chromium, app served by the Bee node.
-  const browser = await chromium.launch(); const ctx = await browser.newContext();
+  const browser = await chromium.launch({ executablePath: CHROMIUM }); const ctx = await browser.newContext();
   await ctx.addInitScript((s) => localStorage.setItem('swarmtyp:settings', s), settings('Alice'));
   const alice = await ctx.newPage(); alice.on('dialog', (d) => void d.accept());
   await alice.goto(`${BEE}/bzz/${REF}/`); await alice.locator('.topbar .status').filter({ hasText: /compiled in/ }).waitFor({ timeout: 180000 });
@@ -29,8 +31,16 @@ const settings = (name) => JSON.stringify({ beeUrl: BEE, stamp: STAMP, nickname:
   for (let i = 0; i < 40; i++) { const open = await win.evaluate(() => { const d = document.getElementById('external-node-candidates-modal'); return !!(d && d.open); }); if (open) { log('external-node dialog: keeping the bundled Ant'); await win.evaluate(() => { const b = document.getElementById('external-node-candidates-managed') || document.getElementById('external-node-candidates-close'); if (b) b.click(); }); break; } await sleep(1000); }
   const evalWv = (script) => win.evaluate(async (s) => { const wv = document.querySelector('webview:not(.hidden)'); if (!wv || typeof wv.executeJavaScript !== 'function') return undefined; try { return await wv.executeJavaScript(s); } catch (e) { return 'ERR ' + e.message; } }, script);
   const go = async (url) => { const input = win.locator('[data-test="address-input"]'); await input.click(); await input.fill(url); await input.press('Enter'); log('navigated to', url); };
-  // Load the app once (cold through Ant), seed settings, then open the project link.
+  // Wait for the bundled Ant to come up (API port from the process list, then /health) before the first navigation;
+  // navigating earlier lands on Freedom's ERR_CONNECTION_REFUSED page.
+  let antPort = null;
+  for (let i = 0; i < 120 && !antPort; i++) { try { const m = execSync('ss -ltnp 2>/dev/null | grep antd || true').toString().match(/127\.0\.0\.1:(\d+)/); if (m) antPort = m[1]; } catch {} if (!antPort) await sleep(1000); }
+  log('ant api port', antPort, `after ${Date.now() - t0} ms`);
+  for (let i = 0; i < 60 && antPort; i++) { try { const h = execSync(`curl -s -m 3 http://127.0.0.1:${antPort}/health`).toString(); if (h) { log('ant /health', h.slice(0, 100)); break; } } catch {} await sleep(2000); }
+  await sleep(3000);
+  // Load the app once (cold through Ant), seed settings, then open the project link. Retry if the error page shows.
   await go(`bzz://${REF}/`);
+  for (let i = 0; i < 20; i++) { await sleep(5000); const href = await evalWv('location.href'); if (!String(href).includes('error.html')) break; log('error page, retrying navigation'); await go(`bzz://${REF}/`); }
   let st = ''; for (let i = 0; i < 180; i++) { await sleep(4000); const s = await evalWv(`JSON.stringify({ href: location.href, status: (document.querySelector('.topbar .status')||{}).textContent })`); if (s && s !== st) { st = s; log('page', String(s).slice(0, 300)); } if (s && /compiled in|compiler failed/.test(String(s))) break; }
   log('app loaded after', `${Date.now() - t0} ms`);
   await evalWv(`localStorage.setItem('swarmtyp:settings', ${JSON.stringify(settings('Freedom'))}); 'ok'`);

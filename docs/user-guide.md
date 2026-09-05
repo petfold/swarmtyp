@@ -114,7 +114,7 @@ Two cautions:
 
 ## 9. Limits of this build
 
-- Sharing needs a postage batch on your node (the genesis record and your feed are writes). Freedom Browser's built-in node cannot write yet, so on Freedom you can read and join through someone else's node but not create.
+- Sharing and joining need a postage batch (the genesis record and your feed are writes). Freedom Browser's built-in node cannot write yet, so in Freedom set **Bee node URL** in ⚙ to a Bee node you can use, such as Swarm Desktop's `http://127.0.0.1:1633`, with its batch id; the app itself still loads through Freedom. Tested: a project shared from Chromium, joined in Freedom, edits both ways.
 - Tested with two and three people on one machine; two networks with a NAT between them are the next test.
 - Projects are public to anyone with the link; private projects are Phase 4.
 - Compiler: Typst 0.14.2 (typst.ts 0.7.0). typst.app runs 0.15.1, so a few newest features are missing. The version is shown in Settings.

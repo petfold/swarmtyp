@@ -15,3 +15,5 @@ public/wasm/
 test-results/
 playwright-report/
 vendor/
+spikes/**/*.png
+spikes/**/*.log
