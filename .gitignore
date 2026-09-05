@@ -14,3 +14,4 @@ spikes/**/*.tar
 public/wasm/
 test-results/
 playwright-report/
+vendor/

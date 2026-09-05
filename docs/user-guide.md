@@ -1,6 +1,6 @@
 # swarmtyp user guide
 
-Status: Phase 1 build (M1, 2026-09-05). One person, one project, on your own device. Collaboration comes in Phase 2; this guide grows with the app.
+Status: Phase 2 build (2026-09-05). Your own document on your device, and shared projects that several people edit at once. This guide grows with the app.
 
 swarmtyp is a Typst editor that runs entirely in your browser and lives on Swarm. The compiler is WebAssembly, the app is a Swarm collection, fonts and packages are Swarm content, and nothing you write leaves your machine unless you upload it. There is no account and no server.
 
@@ -50,6 +50,7 @@ Things to try, in order:
 - **Preview** (right): the pages, drawn only while they are in view. The zoom slider at the top rescales them.
 - **Problems** (bottom left): errors and warnings with file and position; click one to open its file. Below it, the packages the document used and their source.
 - **Status bar**: loading progress, `compiling… fetching font X` while fonts or packages are being fetched for the first time, then the compile time and the error count.
+- **People** (top right, shared projects only): one chip per person in the project, you first. A green dot means a direct connection is open with that person, so edits arrive as they type. Without the dot you have what they had written when you joined; their later edits arrive when you reload (a limit of the current library, see §10). The same person in two tabs shows twice.
 - **⚙ Settings**: see below.
 
 ### Keyboard
@@ -86,27 +87,48 @@ Fonts available without any setup: Libertinus Serif, New Computer Modern and New
 - **Fetch missing packages from packages.typst.org**: the fallback described above.
 - **Zoom**: preview scale.
 
-## 7. Where your work is
+## 7. Sharing a project
 
-In this build the project is stored in your browser's local storage on this device, saved after every change and restored when you reopen the same address. It is not on Swarm and not shared. Two cautions:
+1. Set **Your name** in ⚙ Settings; that is what collaborators see on your chip and caret.
+2. Press **Share…**. The app writes a small "genesis" record to Swarm with your batch, and the address changes to `…#/p/<project id>`. Your document is carried over as it is.
+3. Press **Copy link** and send the link. Anyone who has it can read and write; there is no other access control yet, so treat the link like the document itself.
+4. The other person opens the link. They see your name appear, then your text; you see theirs. Each person's caret is drawn in the other's editor in their colour with their name.
 
-- Everything served from the same Bee node address (`http://127.0.0.1:1633/…`) shares one browser origin, so other Swarm apps opened through the same node can read this storage. Freedom gives each app its own origin and does not have this problem. Phase 2 moves projects to Swarm feeds and Phase 4 encrypts them.
-- Clearing site data clears the project. Export a PDF or copy the source if it matters.
+While you type, the app writes your changes to your own feed on Swarm and sends them directly to the people connected. Everyone's copy is the merge of everyone's feed, so nobody owns the project and nobody can lock anyone out. Two notes:
 
-## 8. Limits of this build
+- A change reaches Swarm a few seconds after you stop typing. If you close the tab in that window the browser asks whether to leave; say no, wait a moment, then close.
+- Someone who opens the link before its creator's first snapshot is written sees `waiting for the document…` until it arrives.
 
-- One person at a time; live collaboration and sharing links are Phase 2.
+**Your identity.** The first time the app runs it makes a key for you and keeps it in this browser. Your chip shows the name you chose plus the last characters of your address, which is what proves your edits are yours. To be the same person on another device, use **Copy identity key** in Settings there and **Import…** here. Keep the key private: whoever has it can write as you. Each tab you open signs with its own sub-key, so two tabs of yours count as two people in the list; that is intended.
+
+## 8. Where your work is
+
+- **Your own document** (the address without `#/p/…`) is stored in this browser's local storage, saved after every change. It is not on Swarm and not shared.
+- **A shared project** is on Swarm as feeds, one per member, written with each member's own postage batch, plus a copy in this browser's IndexedDB so reopening the link is instant and works while Swarm is slow. Anyone with the link can read it.
+
+Two cautions:
+
+- Everything served from the same Bee node address (`http://127.0.0.1:1633/…`) shares one browser origin, so other Swarm apps opened through the same node can read this storage, including your identity key. Freedom gives each app its own origin and does not have this problem. Phase 4 encrypts projects.
+- Clearing site data clears your own document and your identity. Shared projects come back from Swarm; your identity does not unless you copied the key. Export a PDF or copy the source if it matters.
+
+## 9. Limits of this build
+
+- Sharing needs a postage batch on your node (the genesis record and your feed are writes). Freedom Browser's built-in node cannot write yet, so on Freedom you can read and join through someone else's node but not create.
+- Tested with two and three people on one machine; two networks with a NAT between them are the next test.
+- Projects are public to anyone with the link; private projects are Phase 4.
 - Compiler: Typst 0.14.2 (typst.ts 0.7.0). typst.app runs 0.15.1, so a few newest features are missing. The version is shown in Settings.
 - First load is about 12 MB; on a Swarm light node that is minutes, afterwards cached.
 - Preview is raster: crisp at the chosen zoom, redrawn when you zoom. No text selection in the preview.
 - No project-specific fonts, no source-to-preview jumping, no comments.
 
-## 9. If something goes wrong
+## 10. If something goes wrong
 
 - **`compiler failed: Failed to fetch`**: the app could not read its own files. In Freedom, wait for the node to connect and reload; on a Bee node, check the node is running.
 - **`no font could be found`** on an equation: the maths face did not load; reload once the node is connected.
 - **Upload fails**: the batch id is missing, not usable, or belongs to a different node. Check `⚙` and the node's stamps.
 - **Packages missing** with the fallback off: the package is not on the mirror yet; turn the fallback on or ask for it to be mirrored.
+- **`waiting for the document…`** on a shared link: the creator's snapshot is not readable yet. Wait; if it never comes, the creator closed the tab before the first write or shared without a working batch.
+- **No green dot** on a collaborator: no direct connection yet. Setting one up takes half a minute to two minutes because the offer and answer travel through Swarm feeds, and it can fail behind a strict NAT (no TURN server yet, D-15). Until it is up, their new edits do not reach you; reload to fetch their latest snapshot from Swarm.
 - **Stale project after an update**: the app keeps your project across releases; if a release changes the project format you will be told.
 
 Questions and problems: https://github.com/petfold/swarmtyp/issues

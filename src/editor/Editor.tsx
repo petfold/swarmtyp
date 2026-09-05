@@ -7,10 +7,11 @@ import { indentWithTab } from '@codemirror/commands';
 import { setDiagnostics, type Diagnostic as CmDiagnostic } from '@codemirror/lint';
 import { yCollab } from 'y-codemirror.next';
 import { typst } from './typst-mode';
+import { remoteCursors, setRemoteCursors, type CursorInfo } from './remote-cursors';
 import type { Diagnostic } from '../compile/protocol';
 
 // One CodeMirror view per open file, bound to the file's Y.Text (D-03). Remote cursors come in Phase 2.
-export function Editor({ ytext, path, diagnostics }: { ytext: Y.Text; path: string; diagnostics: Diagnostic[] }) {
+export function Editor({ ytext, path, diagnostics, cursors = [], onSelection }: { ytext: Y.Text; path: string; diagnostics: Diagnostic[]; cursors?: CursorInfo[]; onSelection?: (anchor: number, head: number) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
 
@@ -20,11 +21,13 @@ export function Editor({ ytext, path, diagnostics }: { ytext: Y.Text; path: stri
     const view = new EditorView({
       state: EditorState.create({
         doc: ytext.toString(),
-        extensions: [basicSetup, keymap.of([indentWithTab]), typst, EditorView.lineWrapping, yCollab(ytext, null as never, { undoManager })],
+        extensions: [basicSetup, keymap.of([indentWithTab]), typst, EditorView.lineWrapping, yCollab(ytext, null as never, { undoManager }), remoteCursors(),
+          EditorView.updateListener.of((u) => { if (u.selectionSet && onSelection) { const r = u.state.selection.main; onSelection(r.anchor, r.head); } })],
       }),
       parent: host.current,
     });
     viewRef.current = view;
+    (host.current as HTMLElement & { cmView?: EditorView }).cmView = view; // for tests and debugging
     return () => { view.destroy(); viewRef.current = null; undoManager.destroy(); };
   }, [ytext]);
 
@@ -41,6 +44,8 @@ export function Editor({ ytext, path, diagnostics }: { ytext: Y.Text; path: stri
     }
     view.dispatch(setDiagnostics(view.state, cm));
   }, [diagnostics, path]);
+
+  useEffect(() => { viewRef.current?.dispatch({ effects: setRemoteCursors.of(cursors) }); }, [cursors]);
 
   return <div ref={host} className="editor-host" />;
 }

@@ -78,7 +78,7 @@ Every feed write is signed by the peer's secp256k1 key, and deltas are signed to
 
 Why not the other transports: `yWebrtc` needs a signalling server (violates D-05); `SwarmPubSub` (GSOC) needs a Bee build from an unreleased branch; `Waku` relies on a public sandbox. If GSOC pubsub ships in a Bee release, it becomes the natural upgrade for presence.
 
-Known risk: one user in two tabs or on two devices shares one key, so both write the same `_doc` feed. *(spike S6)* Likely fix: a per-session sub-key, or a session id in the feed topic; possibly an upstream change.
+Known risk: one user in two tabs or on two devices shares one key, so both write the same `_doc` feed. *(spike S6: confirmed, silent divergence.)* Fix in Phase 2: each browser session signs with a sub-key derived from the identity key and a per-tab session id, so it is its own member with its own feed; the identity key is the person, the sub-keys are their sessions (`threats.md` T11). A session id in the feed name would be the cleaner upstream fix (swarm-collaborative-docs #6).
 
 ### 4.4 Compile pipeline
 

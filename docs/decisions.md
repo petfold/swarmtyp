@@ -78,9 +78,13 @@ Their JavaScript, WASM, CSS, icons, font index and dictionaries are Typst GmbH's
 
 Phase 2. One dependency on the same `Y.Doc`; reloads and node outages lose nothing typed. Feeds remain the source of truth for other peers. Store per project id; clear on "leave project". What else may live in the same origin depends on D-20.
 
+Implemented 2026-09-05 (`src/collab/session.ts`): `IndexeddbPersistence('swarmtyp:<project id>')` on the `SwarmDoc` document, awaited before the session starts; the e2e reload check passes. "Leave project" (clearing the store) is not built yet. Status left for the owner to close.
+
 ## D-20 — Origin isolation on gateways — OPEN
 
 On a path-based gateway (`https://gateway/bzz/<ref>/`) every app shares one origin, so any app served there can read swarmtyp's localStorage and IndexedDB, including a stored identity key (T14). Options: (a) recommend or require subdomain gateways (`<cid>.bzz.link` style) that give each app its own origin; (b) encrypt the key at rest with a passphrase; (c) keep keys in memory only until Phase 3's wallet derivation; (d) a combination. Decide before Phase 2 ships a key store.
+
+Interim in the Phase 2 build (2026-09-05): the identity key lives in `localStorage` (`swarmtyp:identity`), each tab signs with a derived sub-key, and Settings shows the address with copy and import. This is option (c)'s risk profile without its protection; on a local node or path gateway any other `bzz` app can read the key (T14). Freedom Browser is not affected. Decide before M2 is shown outside.
 
 ## D-21 — Relationship with Typst GmbH and upstream maintainers — OPEN
 

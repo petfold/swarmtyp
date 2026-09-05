@@ -23,6 +23,7 @@
     "@codemirror/search": "^6.5.0",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.36.0",
+    "@ethersphere/bee-js": "github:Apiary-Suite/bee-js#f1c50409bfa960738ad228f492f88dbd21794ee2",
     "@myriaddreamin/typst-ts-renderer": "0.7.0",
     "@myriaddreamin/typst-ts-web-compiler": "0.7.0",
     "@myriaddreamin/typst.ts": "0.7.0",
@@ -30,14 +31,15 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "y-codemirror.next": "^0.3.5",
+    "y-indexeddb": "9.0.12",
     "yjs": "^13.6.30"
   },
   "devDependencies": {
-    "@ethersphere/bee-js": "13.0.0",
     "@playwright/test": "^1.62.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "bee-js13": "npm:@ethersphere/bee-js@13.0.0",
     "typescript": "^5.9.0",
     "vite": "^7.1.0",
     "vitest": "^3.2.0"

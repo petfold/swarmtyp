@@ -46,7 +46,7 @@ The app cannot load or cannot sync. A local node removes the dependency for read
 Nothing on Swarm can be deleted. Every snapshot, blob and PDF persists while a stamp pays. Say so in the UI before the first upload. Encryption (Phase 4) limits what "public forever" means.
 
 ### T11 — One identity, two sessions
-Two tabs with one key write one feed and may corrupt it or drop updates (S6). Fix before Phase 2 ships.
+Two tabs with one key write one feed and may corrupt it or drop updates (S6). Mitigated 2026-09-05: each tab signs with `keccak256(identity key ‖ session id)` (`src/collab/identity.ts`), so the same person in two tabs is two members with two feeds; the member list shows both. The identity key itself never signs. Upstream asked for a session id in feed names instead (#6).
 
 ### T12 — Upstream drift
 typst.ts lags typst; a typst release can change layout. `project.typstVersion` records what compiled the project; the app warns when its compiler differs. Pin versions and keep the compiler wrapper replaceable (D-04).
@@ -56,3 +56,6 @@ A long document with many images can push the worker's memory or make recompiles
 
 ### T14 — Shared origin on a gateway
 Under `https://gateway/bzz/<ref>/` all apps share one origin. Any other app a user opens on the same gateway can read swarmtyp's localStorage and IndexedDB: the identity key (D-06), `y-indexeddb` state (D-19), settings, the Bee URL and the stamp. A malicious or compromised app on a popular gateway could then write as the user. Mitigations: subdomain gateways that give each app its own origin, encryption at rest, in-memory keys until wallet derivation; see D-20. A local node (Swarm Desktop) has the same shape, one origin for all `bzz` content, and is not exempt. typst.app owns its origin and does not face this. Freedom Browser gives every hash and every ENS name its own `bzz://` origin, so users on Freedom are not exposed (S1).
+
+### T15 — Leaving before the write lands
+A snapshot reaches the peer's feed about 0.5–3 s after the last keystroke (library debounce, then the feed write). Closing or reloading the tab in that window keeps the edit in this browser only; other members who were connected already have it over WebRTC, a late joiner does not (e2e, 2026-09-05). Mitigation: the app asks before unloading within 4 s of a local edit; the better fix is a `flush()` or a pending-writes signal in the library (`docs/upstream/swarm-collaborative-docs.md` §11).

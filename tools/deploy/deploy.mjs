@@ -5,7 +5,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, appendFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
-import { Bee, PrivateKey, Topic } from '@ethersphere/bee-js';
+import { Bee, PrivateKey, Topic } from 'bee-js13';
 const args = Object.fromEntries(process.argv.slice(2).map((a, i, arr) => a.startsWith('--') ? [a.slice(2), arr[i + 1]] : []).filter((p) => p.length));
 const env = existsSync('.env.local') ? Object.fromEntries(readFileSync('.env.local', 'utf8').split('\n').filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => l.split('=').map((s) => s.trim()))) : {};
 const bee = args.bee || process.env.VITE_BEE_URL || env.VITE_BEE_URL || 'http://127.0.0.1:1633';

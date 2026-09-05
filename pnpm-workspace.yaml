@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  '@ethersphere/bee-js': true
+  '@ethersphere/bee-js@https://codeload.github.com/Apiary-Suite/bee-js/tar.gz/f1c50409bfa960738ad228f492f88dbd21794ee2': true
