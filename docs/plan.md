@@ -54,7 +54,7 @@ After M2: the first public post to the Typst community and the questions to Typs
 ## Phase 3 — Close the loop (3–4 weeks)
 
 - Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror. Decide D-08 (fallback default) here.
-- Names (D-25): `swarmtyp.gwei` → release manifest after an `app.` subdomain test; `guide.` and `demo.` subdomains; read fallback to `download.gateway.ethswarm.org` when no node answers; first-run About panel.
+- Names (D-25). Done 2026-09-05: `swarmtyp.gwei` → release manifest (`https://swarmtyp.gwei.domains/`, `bzz://swarmtyp.gwei/`), read fallback to the public gateway when no node answers. To do: `/guide/` and `/demo/` paths added by the release tooling; first-run About panel.
 - Publish (D-24): PDF to Swarm and a paged website (SVG pages in a static shell) as one collection; `published` feed manifest as the stable address; a `.gwei` or `.eth` name bound to it (registration and contenthash from the app for `.gwei` through the wallet, free `.id.gwei` subnames for the no-cost path). Spike S11 first.
 - Identity roots behind one interface (D-23): device key as today, mnemonic and wallet through dappdata's derivation; choose swarmtyp's app identity string first. Project list via dappdata.
 - Swarm Desktop path documented and tested (local Bee, own stamp).

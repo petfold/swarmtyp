@@ -68,9 +68,9 @@ That has not been tried through gwei.domains. A subdomain lets us test without t
 4. Tell Claude. It checks https://app.swarmtyp.gwei.domains/ (load time, compile, fonts, sharing) in Chromium and
    bzz://app.swarmtyp.gwei/ in Freedom, and records the result in docs/spikes.md.
 
-## Session 2: move the root to the editor (one transaction)
+## Session 2: move the root to the editor (one transaction) — DONE 2026-09-05
 
-Only after Session 1 is confirmed to work.
+https://swarmtyp.gwei.domains/ opens the editor (tx 0x539863f7…2220). Nothing more to do here.
 
 5. NAME field: `swarmtyp`. In MANAGE NAME click SET WEBSITE, replace the current value (the sample site) with
 
