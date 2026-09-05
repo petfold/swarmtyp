@@ -15,9 +15,15 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
   const win = await app.firstWindow({ timeout: 120000 });
   await win.waitForLoadState('domcontentloaded');
   log('first window', await win.title());
+  // Dismiss the "External Nodes Detected" dialog (keep the bundled Ant) if Freedom found the Bee on 1633.
+  for (let i = 0; i < 40; i++) {
+    const open = await win.evaluate(() => { const d = document.getElementById('external-node-candidates-modal'); return !!(d && d.open); });
+    if (open) { log('external-node dialog shown; closing it to keep the bundled Ant'); await win.evaluate(() => { const b = document.getElementById('external-node-candidates-managed') || document.getElementById('external-node-candidates-close'); if (b) b.click(); }); await new Promise(r => setTimeout(r, 1000)); break; }
+    await new Promise(r => setTimeout(r, 1000));
+  }
   // Find the Ant node's API port from the process list.
   let antPort = null;
-  for (let i = 0; i < 120 && !antPort; i++) {
+  for (let i = 0; i < 90 && !antPort; i++) {
     try { const ss = execSync('ss -ltnp 2>/dev/null | grep antd || true').toString(); const m = ss.match(/127\.0\.0\.1:(\d+)/); if (m) antPort = m[1]; } catch {}
     if (!antPort) await new Promise(r => setTimeout(r, 1000));
   }
@@ -29,12 +35,6 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
     try { log('ant /peers count', execSync(`curl -s -m 5 http://127.0.0.1:${antPort}/peers | python3 -c "import json,sys; print(len(json.load(sys.stdin).get('peers',[])))"`).toString().trim()); } catch {}
   }
   await win.screenshot({ path: path.join(out, 'freedom-start.png') });
-  // Dismiss the "External Nodes Detected" dialog (keep the bundled Ant) if Freedom found the Bee on 1633.
-  for (let i = 0; i < 10; i++) {
-    const open = await win.evaluate(() => { const d = document.getElementById('external-node-candidates-modal'); return !!(d && d.open); });
-    if (open) { log('external-node dialog shown; closing it to keep the bundled Ant'); await win.evaluate(() => { const b = document.getElementById('external-node-candidates-managed') || document.getElementById('external-node-candidates-close'); if (b) b.click(); }); await new Promise(r => setTimeout(r, 1000)); break; }
-    await new Promise(r => setTimeout(r, 1000));
-  }
   const input = win.locator('[data-test="address-input"]');
   for (let i = 0; i < 90 && !antPort; i++) { try { const ss = execSync('ss -ltnp 2>/dev/null | grep antd || true').toString(); const m = ss.match(/127\.0\.0\.1:(\d+)/); if (m) antPort = m[1]; } catch {} if (!antPort) await new Promise(r => setTimeout(r, 1000)); }
   log('ant api port (after dialog)', antPort, `after ${Date.now() - t0} ms`);
@@ -45,9 +45,9 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
   let last = '';
   for (let i = 0; i < 150; i++) {
     await new Promise(r => setTimeout(r, 4000));
-    const st = await evalWv(`JSON.stringify({ href: location.href, origin: location.origin, status: document.getElementById('status') && document.getElementById('status').textContent, hasSwarm: typeof window.swarm, log: (document.getElementById('log') || {}).textContent })`);
+    const st = await evalWv(`JSON.stringify({ href: location.href, origin: location.origin, status: (document.getElementById('status') || document.querySelector('.topbar .status') || {}).textContent, hasSwarm: typeof window.swarm, pages: document.querySelectorAll('.preview canvas').length, log: (document.getElementById('log') || {}).textContent || '' })`);
     if (st && st !== last) { last = st; log('page', String(st).slice(0, 900)); }
-    if (st && /done in|FAILED|error\.html/.test(String(st))) break;
+    if (st && /done in|FAILED|error\.html|compiled in|compiler failed/.test(String(st))) break;
     if (i % 5 === 4) { try { log('ant /peers', execSync(`curl -s -m 5 http://127.0.0.1:${antPort}/peers | python3 -c "import json,sys; print(len(json.load(sys.stdin).get('peers',[])))"`).toString().trim(), 'wv url', await win.evaluate(() => { const wv = document.querySelector('webview:not(.hidden)'); return wv && wv.getURL ? wv.getURL() : null; })); } catch {} }
   }
   log('elapsed since navigate', `${Date.now() - tNav} ms`);
@@ -55,6 +55,6 @@ const log = (...a) => { const line = `[${new Date().toISOString().slice(11, 19)}
   await win.screenshot({ path: path.join(out, 'freedom-page.png') });
   const caps = await evalWv(`(async () => { try { if (!window.swarm) return 'no window.swarm'; const c = await window.swarm.request({ method: 'swarm_getCapabilities' }); return JSON.stringify(c).slice(0, 600); } catch (e) { return 'caps error: ' + e.message; } })()`);
   log('window.swarm capabilities', String(caps));
-  const res = await evalWv(`JSON.stringify(window.__s1 || null)`); log('RESULT', String(res).slice(0, 1200));
+  const res = await evalWv(`JSON.stringify(window.__s1 || { status: (document.querySelector('.topbar .status')||{}).textContent, pages: document.querySelectorAll('.preview canvas').length })`); log('RESULT', String(res).slice(0, 1200));
   await app.close(); log('closed');
 })().catch(e => { log('FATAL', e.stack || e); process.exit(1); });

@@ -12,3 +12,5 @@ spikes/s5/lib/
 spikes/**/*.tar
 /Screenshot*.png
 public/wasm/
+test-results/
+playwright-report/
