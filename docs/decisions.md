@@ -74,17 +74,19 @@ typst.ts ships both renderers. Canvas output cannot carry markup, which removes 
 
 Their JavaScript, WASM, CSS, icons, font index and dictionaries are Typst GmbH's works, licensed for browser use only (their Terms §7). swarmtyp uses the compiler from source via typst.ts, fonts and dictionaries from their upstream projects, and learns from typst.app's behaviour, not its files. `competition.md` §5.
 
-## D-19 — Local persistence with `y-indexeddb` — PROPOSED
+## D-19 — Local persistence with `y-indexeddb` — DECIDED (2026-09-05)
 
 Phase 2. One dependency on the same `Y.Doc`; reloads and node outages lose nothing typed. Feeds remain the source of truth for other peers. Store per project id; clear on "leave project". What else may live in the same origin depends on D-20.
 
-Implemented 2026-09-05 (`src/collab/session.ts`): `IndexeddbPersistence('swarmtyp:<project id>')` on the `SwarmDoc` document, awaited before the session starts; the e2e reload check passes. "Leave project" (clearing the store) is not built yet. Status left for the owner to close.
+Implemented 2026-09-05 (`src/collab/session.ts`): `IndexeddbPersistence('swarmtyp:<project id>')` on the `SwarmDoc` document, awaited before the session starts; the e2e reload check passes. "Leave project" (clearing the store) is not built yet; it is on the Phase 2 list. Closed by the owner 2026-09-05.
 
-## D-20 — Origin isolation on gateways — OPEN
+## D-20 — Origin isolation on gateways — DECIDED (2026-09-05)
 
 On a path-based gateway (`https://gateway/bzz/<ref>/`) every app shares one origin, so any app served there can read swarmtyp's localStorage and IndexedDB, including a stored identity key (T14). Options: (a) recommend or require subdomain gateways (`<cid>.bzz.link` style) that give each app its own origin; (b) encrypt the key at rest with a passphrase; (c) keep keys in memory only until Phase 3's wallet derivation; (d) a combination. Decide before Phase 2 ships a key store.
 
-Interim in the Phase 2 build (2026-09-05): the identity key lives in `localStorage` (`swarmtyp:identity`), each tab signs with a derived sub-key, and Settings shows the address with copy and import. This is option (c)'s risk profile without its protection; on a local node or path gateway any other `bzz` app can read the key (T14). Freedom Browser is not affected. Decide before M2 is shown outside.
+Interim in the Phase 2 build (2026-09-05): the identity key lives in `localStorage` (`swarmtyp:identity`), each tab signs with a derived sub-key, and Settings shows the address with copy and import. This is option (c)'s risk profile without its protection; on a local node or path gateway any other `bzz` app can read the key (T14). Freedom Browser is not affected.
+
+Decision (2026-09-05). **(a) now, (c) through dappdata in Phase 3, (b) never.** Now: the device key stays at rest, Settings says so, the user guide recommends Freedom Browser for that reason, and the key signs nothing but collaboration feeds, so a leak lets someone write to projects the user was in as the user, which T1 already allows anyone with the link to do; the real loss is attribution (T2) on shared-origin nodes, and that is accepted for the interim. Phase 3: the root becomes a wallet signature or a mnemonic via dappdata (its D16, D17, D21, T10), so the key is derived per session and held in memory, and nothing secret is at rest. (b), a passphrase over the stored key, would be thrown away when (c) arrives. The identity modes and the upgrade path are D-23.
 
 ## D-21 — Relationship with Typst GmbH and upstream maintainers — OPEN
 
@@ -113,3 +115,25 @@ What a Solar Punk read gateway must do for (a), to raise with whoever would run 
 6. Bandwidth budget: a cold first load is about 12 MB compressed per user (compiler 10.8 MB, renderer 1 MB, fonts and code), then cached by the browser; a CDN or `Cache-Control` in front keeps repeat cost near zero. Compression on the proxy is optional since the app inflates its own gzip.
 7. Reads only, or also writes: writes through the gateway mean a sponsored batch and abuse controls (rate limit per identity, quota, dappdata T7); reads need no stamp. The alternative for writes is dappdata's model, where the user's own batch is stamped in the browser and any CORS-enabled node uploads it.
 8. Operations: who owns it, uptime expectation, logs and what they retain (T3: the operator sees plaintext until Phase 4 encryption), and whether Solar Punk's existing Bee infrastructure can add a proxy rather than run a new node.
+
+## D-23 — Identity roots: device key, mnemonic, wallet — PROPOSED
+
+Context. swarmtyp needs a secp256k1 key per person for feeds and attribution (design §4.10). Not every user has a wallet, and "open a link, type" (the onboarding the whole design rests on) must not need one. dappdata's derivation already accepts more than one entropy source (its D21: wallet signature, mnemonic), binds the seed to a declared app identity rather than the serving origin (its D16), and hands sub-keys to libraries such as swarm-collaborative-docs (its D17).
+
+Proposal. One pipeline, three interchangeable roots: root secret → seed bound to swarmtyp's app identity → collaboration key → per-session sub-keys (as today, T11).
+
+| Root | Friction | Where the secret lives | Other devices | Weakness |
+|---|---|---|---|---|
+| Device key (today) | none | at rest in this browser | copy and import 64 hex characters | readable by other apps on a shared origin (T14) |
+| Mnemonic | shown once, typed per session or remembered by choice | memory, or at rest by choice | type it in | user must keep it |
+| Wallet | one fixed signature at sign-in | memory for the session | automatic | needs a wallet |
+
+Default is the device key. Settings offers the other two as upgrades with one sentence each on what they buy. Wallet mode caches the derived key in `sessionStorage` for the tab's lifetime so a reload does not prompt again; never in `localStorage`.
+
+Changing root changes the address. Membership and attribution are per address, so an upgraded user appears in old projects as a second person and their earlier edits stay with the old address. Handling, in order of effort: (1) accept and say so, the user re-joins projects with the new identity; (2) a record signed by both keys, kept in the user's dappdata state, that lets the member list merge the two chips; (3) wrap the device key under the wallet-derived key so the address never changes, which puts a root back at rest and fights dappdata's model. Proposed: (1) for Phase 3, (2) if users ask, never (3).
+
+Needs from dappdata, in its plan's swarmtyp section: the mnemonic source built, not only listed (D21); derivation taking swarmtyp's declared app identity (D16). swarmtyp must choose that identity string before the first real user because it cannot change afterwards; the ENS name is the candidate (D-22 requirement 5).
+
+Interim until then: the device key alone, as built in Phase 2 (D-20). It is the first root of this table, so nothing built for it is thrown away; the only Phase 3 work on it is moving the derivation behind the same interface as the other two.
+
+Costs: three onboarding texts and three recovery stories in the user guide; most early users on the weakest mode, so the T14 warning and the Freedom recommendation stay.

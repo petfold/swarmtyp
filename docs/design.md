@@ -131,7 +131,7 @@ PDF export runs in the worker through the compiler. Publishing uploads the PDF t
 
 ### 4.10 Identity, keys, stamps
 
-`SwarmDoc` needs a secp256k1 private key. Phase 2 generates one in the browser, stores it locally, and lets the user export or import it. Where it is stored matters: on a path-based gateway every `bzz` app shares one origin, so localStorage and IndexedDB are readable by any other app served there (`threats.md` T14, D-20). Phase 3 derives it from a domain-bound wallet signature (Sign-In with Ethereum), the dappdata pattern, so one wallet yields the same collaboration identity on every device; dappdata also holds the user's project list.
+`SwarmDoc` needs a secp256k1 private key. Phase 2 generates one in the browser, stores it locally, and lets the user export or import it. That key is a root, not the signing key: each browser session signs with a sub-key derived from it, and Phase 3 puts other roots (mnemonic, wallet signature via dappdata) behind the same derivation, so nothing may assume the stored key is permanent or unique per person (D-23). Where it is stored matters: on a path-based gateway every `bzz` app shares one origin, so localStorage and IndexedDB are readable by any other app served there (`threats.md` T14, D-20). Phase 3 derives it from a domain-bound wallet signature (Sign-In with Ethereum), the dappdata pattern, so one wallet yields the same collaboration identity on every device; dappdata also holds the user's project list.
 
 Writes need a postage stamp. Two working modes:
 

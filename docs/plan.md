@@ -42,6 +42,7 @@ Milestone M1: open the app at a `bzz` address through a local node or Freedom Br
 - Remote cursors and a member list.
 - Handle the two-tabs / two-devices case per the S6 result.
 - `y-indexeddb` persistence (D-19); key storage per the D-20 decision.
+- "Leave project": clear the project's IndexedDB copy on this device (D-19).
 - Playwright e2e: two browser contexts, a Bee Factory network, edits converge.
 
 Milestone M2: two people on two networks open the same link through a gateway, edit the same file and different files, see each other's cursors, both reload and lose nothing.
@@ -54,7 +55,7 @@ After M2: the first public post to the Typst community and the questions to Typs
 
 - Package mirror on Swarm (`tools/mirror`), scheduled in CI; resolver prefers the mirror. Decide D-08 (fallback default) here.
 - Publish: PDF to Swarm, `published` feed, shareable link.
-- Identity from Sign-In with Ethereum (dappdata derivation); project list via dappdata.
+- Identity roots behind one interface (D-23): device key as today, mnemonic and wallet through dappdata's derivation; choose swarmtyp's app identity string first. Project list via dappdata.
 - Swarm Desktop path documented and tested (local Bee, own stamp).
 - Source ↔ preview jumping if typst.ts source maps cooperate.
 
