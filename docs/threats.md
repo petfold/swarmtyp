@@ -11,7 +11,7 @@ What can go wrong, who could cause it, and what swarmtyp does about it. Numbered
 
 ## Who might act against it
 
-A gateway operator; another collaborator; someone who finds a link; a package author; Typst GmbH's package server or CDN; a Bee node on the path; the person maintaining typst.ts.
+A gateway operator; another app served from the same gateway origin; another collaborator; someone who finds a link; a package author; Typst GmbH's package server or CDN; a Bee node on the path; the person maintaining typst.ts.
 
 ## Entries
 
@@ -25,10 +25,10 @@ Feed updates are signed by the owner key; deltas are signed and the library drop
 In gateway mode the Bee operator sees plaintext snapshots, blobs and signalling, can log who edits what, and can refuse writes. It cannot forge writes (T2). Mitigations: encryption (Phase 4) for content; a local node (Swarm Desktop) for users who care; make the gateway URL a plain setting, never a hardcoded default.
 
 ### T4 — Package supply chain
-A package from the mirror or the fallback runs inside the Typst compiler. Typst code has no network or filesystem access, so the blast radius is the rendered output, not the machine. Mirror integrity: every package is content-addressed and pinned by version; the mirror tool records upstream commit and licence; the resolver logs which source served each package. Fallback to `packages.typst.org` leaks which packages a user imports (D-08).
+A package from the mirror or the fallback runs inside the Typst compiler. Typst code has no network or filesystem access, so the blast radius is the rendered output, not the machine. Mirror integrity: every package is content-addressed and pinned by version; the mirror tool records upstream commit and licence; the resolver logs which source served each package. Fallback to `packages.typst.org` leaks which packages a user imports (D-08); typst.app's browser has the same leak, since it fetches tarballs from that server directly.
 
 ### T5 — SVG injection
-Rendered pages are the compiler's SVG, but user SVG images pass through. Sanitise before DOM insertion or render via `<img>`/canvas so no script or foreign element runs in the app origin. Applies equally to previews of collaborators' content.
+Rendered pages are the compiler's SVG, but user SVG images pass through. Sanitise before DOM insertion or render via `<img>`/canvas so no script or foreign element runs in the app origin. Applies equally to previews of collaborators' content. A canvas preview (D-17) removes this surface from the live preview entirely; the rule still applies to every SVG path (export preview, thumbnails).
 
 ### T6 — Key loss
 Losing the identity key means losing the ability to write to one's own feeds; the content survives in snapshots and other peers hold it. Export/import in Phase 2; wallet derivation in Phase 3 makes the key recoverable from the wallet.
@@ -53,3 +53,6 @@ typst.ts lags typst; a typst release can change layout. `project.typstVersion` r
 
 ### T13 — Large documents
 A long document with many images can push the worker's memory or make recompiles slow. Debounce, monotonic ids, and (if S2 finds it) incremental compile. Show a "compiling" indicator rather than freezing the preview.
+
+### T14 — Shared origin on a gateway
+Under `https://gateway/bzz/<ref>/` all apps share one origin. Any other app a user opens on the same gateway can read swarmtyp's localStorage and IndexedDB: the identity key (D-06), `y-indexeddb` state (D-19), settings, the Bee URL and the stamp. A malicious or compromised app on a popular gateway could then write as the user. Mitigations: subdomain gateways that give each app its own origin, encryption at rest, in-memory keys until wallet derivation; see D-20. A local node (Swarm Desktop) has the same shape, one origin for all `bzz` content, and is not exempt. typst.app owns its origin and does not face this.

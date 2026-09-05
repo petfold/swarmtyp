@@ -9,9 +9,19 @@ Outside projects swarmtyp depends on or learns from. Check versions and status b
 - **swarm-collaborative-docs** — https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs — npm `@solarpunkltd/swarm-collaborative-docs`. `SwarmDoc`, `DocSettings`, `DOC_EVENTS`, transports `createSwarmRtcTransport` (recommended), `createYWebrtcTransport`, `createSwarmPubSubTransport` (experimental, unreleased Bee), `createWakuTransport` (experimental). Feeds: `<topic>_doc<address>`, `<topic>_members`, `<topic>_signal`. Multi-file via `doc.getText(path)`.
 - **bee-js** — https://github.com/ethersphere/bee-js — `@ethersphere/bee-js` 12.x for Bee 2.8.x (API v8). Feeds, uploads, Mantaray, ACT, GSOC.
 - **Bee** — https://github.com/ethersphere/bee — the node. Bee Factory (https://github.com/ethersphere/bee-factory) for a local test network in CI; `bee dev` mode is gone since 2.8.1.
-- **Yjs** — https://github.com/yjs/yjs — `y-codemirror.next` for the editor binding, `y-protocols` for Awareness.
+- **Yjs** — https://github.com/yjs/yjs — `y-codemirror.next` for the editor binding, `y-protocols` for Awareness, `y-indexeddb` (https://github.com/yjs/y-indexeddb) for local persistence (D-19).
 - **CodeMirror 6** — https://codemirror.net/ — editor.
 - **dappdata** — Solar Punk, IDEA-190 — per-user dapp state on Swarm keyed to a Sign-In with Ethereum identity; supplies swarmtyp's Phase 3 identity derivation and project list.
+
+## Upstream sources for assets (D-18: never from typst.app)
+
+- **Fonts** — Libertinus https://github.com/alerque/libertinus (OFL); New Computer Modern https://ctan.org/pkg/newcomputermodern (GUST Font License); DejaVu https://dejavu-fonts.github.io/ (Bitstream Vera licence). Record each licence in the font collection manifest.
+- **Hunspell dictionaries** — https://github.com/wooorm/dictionaries (per-language licences listed) or https://github.com/LibreOffice/dictionaries. Only if spellcheck is built.
+- **Typst reference documentation** — built from the typst repository's `docs/` directory and doc comments with `cargo docit compile` (static site or PDF). Candidate for hosting on Swarm; check the licence of `typst-dev-assets` first.
+
+## Competitor
+
+- **typst.app** — https://typst.app — Typst GmbH's hosted editor, closed. Observed architecture, measurements, feature inventory, pricing and licence boundaries in `competition.md` (2026-09-05). Web-app docs https://typst.app/docs/web-app/, roadmap https://typst.app/docs/roadmap/, terms https://typst.app/terms, pricing https://typst.app/pricing/.
 
 ## Prior art (open-source collaborative Typst editors, all server-backed)
 

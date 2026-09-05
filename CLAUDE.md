@@ -6,7 +6,7 @@ Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
 
 ## Status
 
-Design only, 2026-09-04. No code. Next step: Phase 0 spikes in `docs/spikes.md`.
+Design only, 2026-09-05 (competitor analysis added). No code. Next step: Phase 0 spikes in `docs/spikes.md`.
 
 ## Read in this order
 
@@ -16,6 +16,7 @@ Design only, 2026-09-04. No code. Next step: Phase 0 spikes in `docs/spikes.md`.
 4. `docs/decisions.md` — decided, proposed, open. Do not silently re-decide DECIDED items or close OPEN ones.
 5. `docs/threats.md` — what can go wrong and what the design does about it.
 6. `docs/references.md` — the outside projects, with versions.
+7. `docs/competition.md` — what typst.app is made of, what it charges for, and what we may not copy from it.
 
 ## Rules for working here
 
@@ -26,6 +27,7 @@ Design only, 2026-09-04. No code. Next step: Phase 0 spikes in `docs/spikes.md`.
 - The docs are the spec. When code and docs disagree, fix one in the same change. Every decision gets a D-number.
 - Swarm terms as in the Swarm docs: reference, chunk, postage stamp / batch, feed, manifest, Bee, ACT, GSOC. Feeds get immutable stamps, always.
 - Treat collaborator content as untrusted: sanitise rendered SVG before it reaches the DOM (`docs/threats.md` T5).
+- Nothing from typst.app's served bundle (JS, WASM, CSS, icons, font index, dictionaries) enters this repo (D-18). Same compiler, from source via typst.ts; fonts and dictionaries from their upstream projects.
 
 ## Stack (proposed; Phase 0 confirms)
 

@@ -16,7 +16,7 @@ This is not a port of typst.app, which is Typst GmbH's closed product. swarmtyp 
 
 ## Status
 
-Design stage. See `docs/design.md`, then `docs/plan.md`. No code yet; Phase 0 spikes come first.
+Design stage. See `docs/design.md`, then `docs/plan.md`; `docs/competition.md` compares swarmtyp with typst.app. No code yet; Phase 0 spikes come first.
 
 ## Licence
 

@@ -6,7 +6,7 @@ Status: proposal, 2026-09-04. No code exists. Phase 0 spikes (`spikes.md`) test 
 
 A Typst editor that several people can use at once, in the browser, with nothing behind it but Swarm: the app, the documents, the images and fonts, the packages, and the published PDFs all live on Swarm. No server owned by anyone.
 
-Non-goals for now: WYSIWYG editing, comments and review workflow, a mobile UI, offline-first with later merge (Yjs makes it possible; we do not design for it yet).
+Non-goals for now: WYSIWYG editing, comments and review workflow, a mobile UI, offline-first with later merge (Yjs makes it possible and D-19 keeps local state across reloads, but we do not design for long offline periods yet).
 
 ## 2. Why Typst fits
 
@@ -17,6 +17,8 @@ Three things line up.
 - Swarm serves static apps and mutable pointers. A `bzz` collection hosts the bundle; feeds carry document state; content addresses name every asset.
 
 What we are *not* doing: porting typst.app. Typst GmbH keeps the web app closed; only the compiler is open (Apache-2.0). swarmtyp is an independent editor on the open compiler.
+
+typst.app's own browser client is built from the same open parts: CodeMirror 6 with `y-codemirror.next`, Yjs, a WASM compiler in a worker, lazily loaded fonts, packages fetched by the browser. Only its sync server, storage and accounts are closed (`competition.md` §2). Those are exactly what swarmtyp replaces with Swarm. Nothing from their bundle is copied (D-18).
 
 ## 3. Overview
 
@@ -95,7 +97,7 @@ Y.Doc update (local or remote)
                  diagnostics → editor gutter and a problems panel
 ```
 
-Requests carry a monotonic id; the main thread drops results older than the newest request. Recompiles of unchanged input are cheap because typst memoises internally; whether typst.ts exposes incremental compile across calls is *(spike S2)*.
+Requests carry a monotonic id; the main thread drops results older than the newest request. Recompiles of unchanged input are cheap because typst memoises internally; whether typst.ts exposes incremental compile across calls is *(spike S2)*. Reference point: typst.app paints a one-page document about 110 ms after the last keystroke (`competition.md` §2.2); S2 uses that as its target.
 
 The "world" the compiler sees is a virtual filesystem (typst.ts calls this the shadow filesystem) that swarmtyp fills from the CRDT and from Swarm. Nothing touches a real disk.
 
@@ -111,15 +113,17 @@ A user drops an image: swarmtyp uploads it to Swarm with the user's stamp, gets 
 2. the swarmtyp package mirror on Swarm: a Mantaray manifest mapping `preview/<name>/<version>` → collection reference, its root published on a feed swarmtyp controls (mutable pointer, immutable content);
 3. optional fallback to `packages.typst.org`, on by default until the mirror is complete, off in a private project (D-08).
 
+The package server allows cross-origin requests: typst.app's browser fetches `preview/<name>-<version>.tar.gz` from it directly, so the fallback needs no proxy. typst.app also loads the whole `preview/index.json` (2.1 MB) at startup; swarmtyp does not. The mirror publishes a compact index and the resolver fetches one package at a time.
+
 The mirror is filled by `tools/mirror`: it walks the public `typst/packages` repository, uploads each package directory as a collection, records the declared licence, and advances the feed. Run it on a schedule in CI. The compiler must let us intercept package resolution *(spike S3)*.
 
 ### 4.7 Fonts
 
-typst.ts downloads its default font assets from GitHub. Not acceptable here. swarmtyp uploads a chosen font set (the Typst defaults: Libertinus Serif, New Computer Modern, DejaVu Sans Mono, plus a small CJK fallback if size allows) as a Swarm collection and loads fonts lazily. Project-specific fonts are ordinary blobs registered with the world. *(spike S4)*
+typst.ts downloads its default font assets from GitHub. Not acceptable here. swarmtyp uploads a chosen font set (the Typst defaults: Libertinus Serif, New Computer Modern, DejaVu Sans Mono, plus a small CJK fallback if size allows) as a Swarm collection and loads fonts lazily. Project-specific fonts are ordinary blobs registered with the world. *(spike S4)* typst.app has the same shape: a compact font index up front, then one face at a time as the document needs it, so a document without maths never downloads the 1.4 MB maths font (`competition.md` §2.1). The Swarm font collection carries such an index.
 
 ### 4.8 Preview
 
-Rendered pages arrive as SVG from the renderer. The SVG is the compiler's output, but a project's own SVG *images* pass through it, so swarmtyp sanitises before inserting into the DOM or renders into `<img>`/canvas (see `threats.md` T5). Click-to-source jumping is a later nicety; tinymist's preview does it on top of typst.ts, so the plumbing exists.
+typst.ts renders pages either as SVG or onto a canvas. SVG is crisp at any zoom and selectable, but a project's own SVG *images* pass through the compiler into it, so it must be sanitised before it reaches the DOM (`threats.md` T5). A canvas preview cannot carry markup at all; typst.app paints raster pages into a `<canvas>`. D-17 proposes canvas for the live preview and SVG where vectors matter (export, print-quality zoom); S10 measures both. Any SVG that does reach the DOM is sanitised first. Click-to-source jumping is a later nicety; tinymist's preview does it on top of typst.ts, so the plumbing exists.
 
 ### 4.9 Export and publish
 
@@ -127,7 +131,7 @@ PDF export runs in the worker through the compiler. Publishing uploads the PDF t
 
 ### 4.10 Identity, keys, stamps
 
-`SwarmDoc` needs a secp256k1 private key. Phase 2 generates one in the browser, stores it locally, and lets the user export or import it. Phase 3 derives it from a domain-bound wallet signature (Sign-In with Ethereum), the dappdata pattern, so one wallet yields the same collaboration identity on every device; dappdata also holds the user's project list.
+`SwarmDoc` needs a secp256k1 private key. Phase 2 generates one in the browser, stores it locally, and lets the user export or import it. Where it is stored matters: on a path-based gateway every `bzz` app shares one origin, so localStorage and IndexedDB are readable by any other app served there (`threats.md` T14, D-20). Phase 3 derives it from a domain-bound wallet signature (Sign-In with Ethereum), the dappdata pattern, so one wallet yields the same collaboration identity on every device; dappdata also holds the user's project list.
 
 Writes need a postage stamp. Two working modes:
 
@@ -147,10 +151,15 @@ Constraints on the bundle:
 - Workers created with module URLs relative to `import.meta.url`.
 - WASM loads through the gateway; if the manifest does not serve `application/wasm`, use `WebAssembly.instantiate` on an ArrayBuffer instead of `instantiateStreaming`. *(spike S1)*
 - First load fetches ~13 MB of WASM plus fonts. Measure it over a gateway and cache aggressively. *(spike S8)*
+- typst.ts's WASM uses no threads, so the page needs no cross-origin isolation. If that changes, a service worker can add the COOP/COEP headers a gateway will not send; typst.app does exactly this.
 
 ### 4.12 Sharing and joining
 
 A project link is `<app address>#/p/<project id>`. Opening it makes `SwarmDoc` add the visitor to `<topic>_members` and pull every member's snapshot. Anyone with the link can read and write; the id is a capability. Fine for the first releases; `threats.md` T1 and D-12 describe the path to private projects (project key in the fragment, encrypted payloads, which needs an encryption hook in the library — Solar Punk owns it, so this is an upstream feature, not a fork).
+
+### 4.13 Local persistence
+
+`y-indexeddb` keeps the `Y.Doc`'s updates in IndexedDB, so a reload, a closed laptop or an unreachable Bee node loses nothing that was typed; on reconnect the normal snapshot and delta paths carry the backlog. The peer's own snapshot feed stays the source of truth for everyone else (D-19; typst.app persists the same way). Subject to the origin caveat in 4.10.
 
 ## 5. What lives on Swarm
 

@@ -12,7 +12,7 @@ The library already does per-peer snapshot feeds, member discovery, signed delta
 
 ## D-03 — CodeMirror 6, not Monaco — PROPOSED
 
-Monaco is the library's proven example, but it is large, and its strengths (TypeScript language services) do not apply to Typst. CodeMirror 6 is small, has `y-codemirror.next`, and is what TypstDrive uses. Bundle size matters more here than elsewhere because Swarm serves every byte on first load. Revert to Monaco if S5 shows the CodeMirror awareness bridge is painful.
+Monaco is the library's proven example, but it is large, and its strengths (TypeScript language services) do not apply to Typst. CodeMirror 6 is small, has `y-codemirror.next`, and is what TypstDrive uses. Bundle size matters more here than elsewhere because Swarm serves every byte on first load. Revert to Monaco if S5 shows the CodeMirror awareness bridge is painful. Evidence, 2026-09-05: typst.app's own client is CodeMirror 6 with `y-codemirror.next` (`competition.md` §2.1). Recommend moving to DECIDED once S5 confirms the awareness bridge.
 
 ## D-04 — Use typst.ts rather than our own WASM build of typst — PROPOSED
 
@@ -65,3 +65,19 @@ The library example uses Google's STUN. Options: keep it, run a Solar Punk STUN,
 ## D-16 — Project id = genesis reference — PROPOSED
 
 The reference of the immutable initial `project` JSON upload is the id and the `SwarmDoc` topic. Unique, verifiable, no registry needed.
+
+## D-17 — Preview renderer: canvas first, SVG where vectors matter — PROPOSED
+
+typst.ts ships both renderers. Canvas output cannot carry markup, which removes the SVG-injection surface (T5) from the live preview by construction; typst.app paints raster pages the same way. SVG stays for export and for zoom levels where raster looks poor, always sanitised. S10 measures both paths (sharpness, latency, memory, zoom behaviour); if canvas fails the quality bar, revert to sanitised SVG.
+
+## D-18 — Nothing from typst.app's bundle enters this repository — PROPOSED
+
+Their JavaScript, WASM, CSS, icons, font index and dictionaries are Typst GmbH's works, licensed for browser use only (their Terms §7). swarmtyp uses the compiler from source via typst.ts, fonts and dictionaries from their upstream projects, and learns from typst.app's behaviour, not its files. `competition.md` §5.
+
+## D-19 — Local persistence with `y-indexeddb` — PROPOSED
+
+Phase 2. One dependency on the same `Y.Doc`; reloads and node outages lose nothing typed. Feeds remain the source of truth for other peers. Store per project id; clear on "leave project". What else may live in the same origin depends on D-20.
+
+## D-20 — Origin isolation on gateways — OPEN
+
+On a path-based gateway (`https://gateway/bzz/<ref>/`) every app shares one origin, so any app served there can read swarmtyp's localStorage and IndexedDB, including a stored identity key (T14). Options: (a) recommend or require subdomain gateways (`<cid>.bzz.link` style) that give each app its own origin; (b) encrypt the key at rest with a passphrase; (c) keep keys in memory only until Phase 3's wallet derivation; (d) a combination. Decide before Phase 2 ships a key store.
