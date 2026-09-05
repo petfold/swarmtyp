@@ -156,3 +156,16 @@ S11 part 1 (2026-09-05): the paged site works from the browser compiler and rend
 
 Not decided: whether the paged site is the default or the fallback; whether swarmtyp maintains themes at all; the `target()` conventions we recommend to authors; wallet-only name purchase versus a sponsored `.id.gwei` subname for wallet-less users (D-23). Spike S11 first.
 
+## D-25 — What `swarmtyp.gwei` and its subdomains point at — PROPOSED (2026-09-05)
+
+Context. The owner registered `swarmtyp.gwei` (S11) and asked whether it should open the editor, with published documents under other names or under subdomains. Facts (S11, GNS README): only the parent's owner can mint subdomains, each is its own ERC-721 with its own contenthash, free apart from gas, and the gateway serves `<sub>.swarmtyp.gwei.domains`; the gateway ignores `Range` and serves whole bodies (the app's loader copes, `fetchRanged` accepts a 200), while `download.gateway.ethswarm.org/bytes/<ref>` answers `Range` with 206 and `Access-Control-Allow-Origin: *`, so a browser with no node can read fonts and packages from it.
+
+Proposal.
+1. **Root → the editor.** `swarmtyp.gwei` points at the release feed manifest (`b656fac5…a100`), so `https://swarmtyp.gwei.domains/` and `bzz://swarmtyp.gwei/` open the current app and every release is a feed update, no transaction. The gateway gives the app its own origin (`swarmtyp.gwei.domains`), which removes T14 for gateway users; Freedom already isolates per name. Verify first on a subdomain (`app.swarmtyp.gwei`) that the 12 MB load, the worker and the fonts work through the gateway, then re-point the root.
+2. **swarmtyp's own pages as subdomains**, minted by the owner: `guide.swarmtyp.gwei` (the user guide, written in Typst and published with the paged-site path, so the guide is also the first real published document), `demo.swarmtyp.gwei` (the S11 sample). A handful, minted by hand.
+3. **Users' documents under users' names**, not under `swarmtyp.gwei`: subdomains can only be minted by the owner's wallet, so per-user or per-document subdomains would need the owner, or a signing service, in the loop (D-05 forbids the service, and the owner does not scale). Publishing offers the user's own `.gwei` (0.0005 ETH), a free `.id.gwei`, or ENS; the app fills in the contenthash for them.
+4. **Reads without a node.** When the configured Bee URL does not answer, the app reads fonts, packages and blobs from `download.gateway.ethswarm.org` (ranged, CORS open); writes still need a node and a stamp, shown as today. This is the "read gateway" of D-22 without running one.
+5. **A background text inside the editor**: a first-run panel and an "About" entry, three sentences on what swarmtyp is and where the guide lives, linking to `guide.swarmtyp.gwei`; the starter document stays the hands-on demo.
+
+Costs: two or three owner transactions for subdomains; the app-through-gateway test before the root moves; the read fallback is a small change in `src/swarm/` plus a status line saying which source is in use.
+
