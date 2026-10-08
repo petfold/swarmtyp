@@ -131,7 +131,7 @@ Two cautions:
 - Sharing and joining need a postage batch (the genesis record and your feed are writes). swarmtyp cannot write through Freedom Browser's built-in node yet, so in Freedom set **Bee node URL** in ⚙ to a Bee node you can use, such as Swarm Desktop's `http://127.0.0.1:1633`, with its batch id; the app itself still loads through Freedom. Tested: a project shared from Chromium, joined in Freedom, edits both ways. This works up to Freedom 0.8.6. Freedom 0.8.7 and later stop pages from reaching any node's API, port 1633 included, so there sharing and joining wait until swarmtyp can write through Freedom's own node.
 - Tested with two and three people on one machine; two networks with a NAT between them are the next test.
 - Projects are public to anyone with the link; private projects are Phase 4.
-- Compiler: Typst 0.14.2 (typst.ts 0.7.0). typst.app runs 0.15.1, so a few newest features are missing. The version is shown in Settings.
+- Compiler: Typst 0.15.0 (typst.ts 0.8.0-rc3). typst.app runs 0.15.1, so what 0.15.1 added is missing. The version is shown in Settings. A document last compiled with an older Typst shows a notice until it compiles without errors; Typst 0.15 removed names such as `plus.circle`, write `plus.o` instead.
 - First load is about 12 MB; on a Swarm light node that is minutes, afterwards cached. A reload with a warm cache compiles in a few seconds.
 - Preview is raster: crisp at the chosen zoom, redrawn when you zoom. No text selection in the preview.
 - No project-specific fonts, no source-to-preview jumping, no comments.

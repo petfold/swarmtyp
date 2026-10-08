@@ -1,4 +1,4 @@
-#set page(paper: "a4", margin: (x: 2cm, y: 1.5cm), numbering: "1")
+#set page(paper: "a4", margin: (x: 2cm, y: 1.8cm), numbering: "1")
 #set text(size: 10.5pt)
 #set par(justify: true)
 #show figure.caption: set text(size: 9pt, fill: luma(60))
@@ -66,7 +66,7 @@ $ 2^20 times 4 "KiB" = 4 "GiB" . $
 
 The shared document is a CRDT (Yjs). Merging is commutative, associative and idempotent,
 
-$ A plus.o B = B plus.o A, quad (A plus.o B) plus.o C = A plus.o (B plus.o C), quad A plus.o A = A , $
+$ A plus.circle B = B plus.circle A, quad (A plus.circle B) plus.circle C = A plus.circle (B plus.circle C), quad A plus.circle A = A , $
 
 which is why two people can type at once, go offline, come back, and end up with the same text. And because this is Typst, ordinary mathematics just works:
 

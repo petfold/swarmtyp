@@ -6,7 +6,7 @@ Named in `docs/decisions.md` D-01 (renamed from the working name `galley`).
 
 ## Status
 
-Phase 1 M1 reached 2026-09-05 (stable address `bzz/b656fac5…a100/` via the release feed; also verified in Freedom Browser); Phase 2 collaboration working on one machine (M2 needs two networks); the name `swarmtyp.gwei` points at the release feed since 2026-09-05, so `https://swarmtyp.gwei.domains/` and `bzz://swarmtyp.gwei/` open the current release (D-25, S11); with no node the app reads fonts and packages from the public gateway; Phase 0 results in `docs/spikes.md`, throwaway code under `spikes/`. Stack pinned: typst.ts 0.7.0 (D-04), CodeMirror 6 (D-03), canvas preview of visible pages (D-17). D-22 decided: in-browser clients (Freedom Browser, later weeb-3) are the path for users without a node; test in Freedom, load large assets in ranges.
+Phase 1 M1 reached 2026-09-05 (stable address `bzz/b656fac5…a100/` via the release feed; also verified in Freedom Browser); Phase 2 collaboration working on one machine (M2 needs two networks); the name `swarmtyp.gwei` points at the release feed since 2026-09-05, so `https://swarmtyp.gwei.domains/` and `bzz://swarmtyp.gwei/` open the current release (D-25, S11); with no node the app reads fonts and packages from the public gateway; Phase 0 results in `docs/spikes.md`, throwaway code under `spikes/`. Stack pinned: typst.ts 0.8.0-rc3, Typst 0.15.0 (D-28, S14), CodeMirror 6 (D-03), canvas preview of visible pages (D-17). D-22 decided: in-browser clients (Freedom Browser, later weeb-3) are the path for users without a node; test in Freedom, load large assets in ranges.
 
 ## Read in this order
 
@@ -32,7 +32,7 @@ Phase 1 M1 reached 2026-09-05 (stable address `bzz/b656fac5…a100/` via the rel
 
 ## Stack (confirmed by Phase 0)
 
-TypeScript · Vite (`base: './'`, hash routing) · React · CodeMirror 6 + `y-codemirror.next` · Yjs · typst.ts 0.7.x (`@myriaddreamin/typst.ts`, `typst-ts-web-compiler`, `typst-ts-renderer`) in a Web Worker · `@ethersphere/bee-js` 12.x against Bee 2.8.x · `@solarpunkltd/swarm-collaborative-docs` with `createSwarmRtcTransport` · Vitest for logic · Playwright for two-browser collaboration tests against a Bee Factory network.
+TypeScript · Vite (`base: './'`, hash routing) · React · CodeMirror 6 + `y-codemirror.next` · Yjs · typst.ts 0.8.0-rc3 (`@myriaddreamin/typst.ts`, `typst-ts-web-compiler`, `typst-ts-renderer`) in a Web Worker · `@ethersphere/bee-js` 12.x against Bee 2.8.x · `@solarpunkltd/swarm-collaborative-docs` with `createSwarmRtcTransport` · Vitest for logic · Playwright for two-browser collaboration tests against a Bee Factory network.
 
 ## Layout
 

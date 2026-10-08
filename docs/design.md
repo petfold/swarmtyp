@@ -12,7 +12,7 @@ Non-goals for now: WYSIWYG editing, comments and review workflow, a mobile UI, o
 
 Three things line up.
 
-- The compiler is open-source Rust and runs as WebAssembly in the browser. [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) (v0.7.0, June 2026) ships it as `@myriaddreamin/typst-ts-web-compiler` and `@myriaddreamin/typst-ts-renderer`: 28.3 MB and 0.97 MB raw, 10.8 MB and 0.36 MB gzipped (S2). typst.ts 0.7.0 embeds Typst 0.14.2. Edit → compile → preview needs no server.
+- The compiler is open-source Rust and runs as WebAssembly in the browser. [typst.ts](https://github.com/Myriad-Dreamin/typst.ts) (v0.7.0, June 2026) ships it as `@myriaddreamin/typst-ts-web-compiler` and `@myriaddreamin/typst-ts-renderer`: 28.3 MB and 0.97 MB raw, 10.8 MB and 0.36 MB gzipped (S2). typst.ts 0.7.0 embeds Typst 0.14.2. Since 2026-10-08 swarmtyp runs 0.8.0-rc3, which embeds Typst 0.15.0: 30.2 MB and 1.28 MB raw, 10.9 MB and 0.49 MB gzipped (S14, D-28). Edit → compile → preview needs no server.
 - Typst source is plain text. Co-editing is one `Y.Text` CRDT per file, the simplest Yjs case. Solar Punk already has a library that does exactly this over Swarm: `@solarpunkltd/swarm-collaborative-docs`.
 - Swarm serves static apps and mutable pointers. A `bzz` collection hosts the bundle; feeds carry document state; content addresses name every asset.
 

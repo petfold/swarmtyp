@@ -224,3 +224,5 @@ Consequences: T12 promises a warning when a project's `typstVersion` differs fro
 Decide before the first public post (D-21), when people start bringing documents from typst.app.
 
 **Decision (Peter, 2026-10-08).** **(b)**: move to 0.8.0-rc3 after spike S14, building the T12 version warning with it, and adapt again when 0.8.0 is final. Fall back to (a) if S14 shows a regression; reconsider (c) if typst.ts is still silent when Typst 0.16 ships.
+
+Status 2026-10-08: S14 passed after one starter fix (`plus.circle` to `plus.o`); the move, the T12 notice and the legacy starters are on branch `s14-typst-ts-rc3`, e2e green in Chromium and Firefox. Merge and release wait for the owner.

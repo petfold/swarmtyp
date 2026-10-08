@@ -252,4 +252,26 @@ Method: on a branch, move `@myriaddreamin/typst.ts`, `typst-ts-web-compiler` and
 
 Exit: the suites pass and nothing is slower or larger than the numbers above justify; then the move goes ahead with the T12 warning. A regression keeps 0.7.0 (D-28 option (a)).
 
-Result: not run yet.
+Result (2026-10-08, Node 22 and headless Chromium on the development machine, 0.7.0 from `spikes/s2`, rc3 from `spikes/s14`; `spikes/s14/bench.mjs`, `spikes/s14/canvas.mjs`): **passes, after one fix to the starter.** The move is done on branch `s14-typst-ts-rc3`.
+
+| Two runs each | 0.7.0 (Typst 0.14.2) | 0.8.0-rc3 (Typst 0.15.0) |
+|---|---|---|
+| S2 document, 22 pages: cold compile | 523, 550 ms | 566, 532 ms |
+| warm, unchanged / one file edited / one word edited | 67–70 / 98–103 / 94–100 ms | 79–81 / 127–132 / 102–117 ms |
+| incremental server, one word | 53–75 ms, delta 6.6 KB | 55–66 ms, delta 6.7 KB |
+| PDF of the 22 pages | 160–204 ms, 194 KB | 177–179 ms, 179 KB |
+| canvas at 2 px/pt, S10 page (first page / all 22) | 90–97 ms / 1.12–1.25 s (51–57 ms a page) | 64–70 ms / 0.25–0.29 s (11–13 ms a page) |
+| canvas at 3 px/pt, 22 pages | 1.22–1.29 s | 0.33–0.37 s |
+| starter, cold with fetches / warm | 1013 / 17 ms | 986 / 12 ms |
+| compiler WASM, raw / gzip | 28.3 / 10.77 MB | 30.2 / 10.90 MB |
+| renderer WASM, raw / gzip | 0.97 / 0.36 MB | 1.28 / 0.49 MB |
+
+- **The starter broke.** Typst 0.15 removed the `circle` modifier from `plus`, `times`, `dot` and `minus` ("unknown symbol modifier"), and 0.14.2 accepted `plus.circle` without a warning. `plus.o` works in both, so the starter uses it now. All three earlier `starter.typ` versions use `plus.circle`; they join `LEGACY_STARTERS`, so an untouched copy is replaced rather than left failing. Users' own documents can hit the same break: the T12 notice is built with the move (a banner while the project's recorded Typst version differs; the version is recorded after a compile without errors, never downgraded).
+- **Same output.** After the fix the starter renders pixel-identical to 0.7.0 (one page; 80 dpi, 5 % fuzz). Page 1 of the S10 document is pixel-identical on canvas; page 11 differs in one line only because Typst 0.15's `lorem` emits different words (`lorem(250)`: 1741 characters against 1717).
+- **Lazy fonts unchanged**, with the font index built by 0.7.0: plain text pulls Libertinus Serif regular and bold, maths adds New Computer Modern Math and Libertinus italic, a second compile pulls nothing.
+- **Packages.** `@preview/bar-point:0.1.0` (needs Typst 0.15.0) imports on rc3 and fails on 0.7.0; `@preview/algol-code:0.1.0` needs 0.15.1 and fails on both.
+- **In the built app** (`spikes/s14/upgrade.mjs`, Chromium): an untouched earlier starter recorded with Typst 0.14.2 is replaced by the current one and compiles to one page with no notice; an edited document using `plus.circle` shows the error and the notice, and after the fix compiles cleanly and the notice is gone.
+- **App.** Type check and build pass; unit tests pass; `pnpm test:e2e` (smoke and collaboration, Chromium and Firefox, against the Swarm Desktop node) passes in 2.2 min. rc3 logs "using deprecated parameters for the initialization function" once (wasm-bindgen inside typst.ts); harmless.
+- **Bytes on a cold load:** the gzipped compiler grows by 185 KB (10.84 to 11.02 MB) and the renderer by 306 KB. The renderer ships uncompressed; gzipping it like the compiler would save about 0.8 MB per cold load on either version.
+
+Consequences: D-28's move goes ahead (done on the branch); recompiles cost 10–30 % more and page painting about a fifth of before, so the preview after a keystroke is faster overall.

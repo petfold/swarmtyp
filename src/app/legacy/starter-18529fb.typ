@@ -66,7 +66,7 @@ $ 2^20 times 4 "KiB" = 4 "GiB" . $
 
 The shared document is a CRDT (Yjs). Merging is commutative, associative and idempotent,
 
-$ A plus.o B = B plus.o A, quad (A plus.o B) plus.o C = A plus.o (B plus.o C), quad A plus.o A = A , $
+$ A plus.circle B = B plus.circle A, quad (A plus.circle B) plus.circle C = A plus.circle (B plus.circle C), quad A plus.circle A = A , $
 
 which is why two people can type at once, go offline, come back, and end up with the same text. And because this is Typst, ordinary mathematics just works:
 

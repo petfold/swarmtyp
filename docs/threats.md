@@ -49,7 +49,7 @@ Nothing on Swarm can be deleted. Every snapshot, blob and PDF persists while a s
 Two tabs with one key write one feed and may corrupt it or drop updates (S6). Mitigated 2026-09-05: each tab signs with `keccak256(identity key ‖ session id)` (`src/collab/identity.ts`), so the same person in two tabs is two members with two feeds; the member list shows both. The identity key itself never signs. Upstream asked for a session id in feed names instead (#6).
 
 ### T12 — Upstream drift
-typst.ts lags typst; a typst release can change layout. `project.typstVersion` records what compiled the project; the app is meant to warn when its compiler differs, which is not built yet (D-28). Pin versions and keep the compiler wrapper replaceable (D-04).
+typst.ts lags typst; a typst release can change layout. `project.typstVersion` records the newest Typst that compiled the project without errors (written after a clean compile, never downgraded); while it differs from the app's compiler a banner says so (built 2026-10-08 with D-28). Example from S14: Typst 0.15 removed `plus.circle` and the other `circle` modifiers, which 0.14.2 accepted without a warning. Pin versions and keep the compiler wrapper replaceable (D-04).
 
 ### T13 — Large documents
 A long document with many images can push the worker's memory or make recompiles slow. Debounce, monotonic ids, and (if S2 finds it) incremental compile. Show a "compiling" indicator rather than freezing the preview.

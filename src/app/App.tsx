@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Y from 'yjs';
-import { CompileClient, type CompileOutput, type Status } from '../compile/client';
+import { COMPILER_VERSION, CompileClient, type CompileOutput, type Status } from '../compile/client';
 import { PageRenderer } from '../compile/render';
 import type { Diagnostic } from '../compile/protocol';
 import { Editor } from '../editor/Editor';
-import { addBlob, addTextFile, filesMap, isTextPath, meta, normalizePath, removeFile, renameFile, saveLocal, snapshot, textOf, projectMap } from '../project/model';
+import { addBlob, addTextFile, filesMap, isTextPath, meta, normalizePath, recordTypstVersion, removeFile, renameFile, saveLocal, snapshot, textOf, projectMap, TYPST_VERSION } from '../project/model';
 import { pendingImport, useProject, useRoute } from './useProject';
 import { loadIdentity, shortAddress } from '../collab/identity';
 import { colorFor } from '../editor/remote-cursors';
@@ -81,6 +81,7 @@ export function App() {
     };
     const apply = (out: CompileOutput) => {
       setDiagnostics(out.diagnostics); setCompileMs(out.ms); if (out.packages.length) setPackages((p) => [...p, ...out.packages]);
+      if (out.artifact && !out.diagnostics.some((x) => x.severity === 'error')) recordTypstVersion(d); // T12
       if (out.artifact && rendererRef.current) { lastArtifact.current = out.artifact; rendererRef.current.setArtifact(out.artifact); setArtifactVersion((v) => v + 1); }
     };
     const schedule = (_u: Uint8Array, origin: unknown) => { if (origin !== 'remote' && origin !== 'swarm-rtc' && route.kind === 'project') lastLocalEdit.current = Date.now(); /* library origins mark peers' updates */ if (timer) clearTimeout(timer); timer = setTimeout(() => { if (route.kind === 'local') saveLocal(d); void run(); }, 200); };
@@ -167,6 +168,7 @@ export function App() {
         <button onClick={() => setShowSettings((v) => !v)} aria-label="Settings">⚙</button>
       </header>
       {readSource === 'gateway' && route.kind === 'local' && <div className="banner">No Bee node answers at {settings.beeUrl}: fonts and packages come from the public read gateway, so you can write and export. Uploading images and sharing a project need a node with a postage batch (⚙ Settings).</div>}
+      {m.typstVersion !== TYPST_VERSION && <div className="banner">This document last compiled cleanly with Typst {m.typstVersion}; swarmtyp now runs Typst {TYPST_VERSION}. Errors that appear now may come from the version change{m.typstVersion.startsWith('0.14') ? <> (Typst 0.15 removed names such as <code>plus.circle</code>: write <code>plus.o</code>)</> : null}. The notice goes away after a compile without errors (T12).</div>}
       {project.error && <div className="banner">Swarm write failed: {project.error}. Your edits stay in this browser; check the postage batch in Settings (T7).</div>}
       <div className="body">
         <aside className="files">
@@ -208,7 +210,7 @@ export function App() {
           <label>STUN server (for direct connections between collaborators, D-15) <input value={settings.stun} onChange={(e) => setSettings({ ...settings, stun: e.target.value })} onBlur={() => saveSettings(settings)} /></label>
           {route.kind === 'local' && <div className="hint">Your own document is saved in this browser. <button onClick={() => { if (confirm('Replace your document with the current demo document? This cannot be undone.')) { localStorage.removeItem('swarmtyp:project:local'); location.reload(); } }}>Start over with the demo document</button></div>}
           <label><input type="checkbox" checked={settings.allowFallback} onChange={(e) => { const s = { ...settings, allowFallback: e.target.checked }; setSettings(s); saveSettings(s); }} /> Fetch missing packages from packages.typst.org (D-08; leaks which packages you use)</label>
-          <div className="hint">Compiler: Typst {m.typstVersion} via typst.ts 0.7.0. Project created {m.created ? new Date(m.created).toLocaleString() : '—'}. Everything you upload is public and permanent on Swarm (T10).</div>
+          <div className="hint">Compiler: Typst {TYPST_VERSION} via typst.ts {COMPILER_VERSION}; this document last compiled cleanly with Typst {m.typstVersion}. Project created {m.created ? new Date(m.created).toLocaleString() : '—'}. Everything you upload is public and permanent on Swarm (T10).</div>
           <button onClick={() => setShowSettings(false)}>Close</button>
         </div>
       )}

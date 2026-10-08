@@ -7,7 +7,7 @@ export interface CompileOutput { artifact: Uint8Array | null; diagnostics: Diagn
 export type Status = { state: 'loading'; stage: string; done?: number; total?: number } | { state: 'ready'; ms: number } | { state: 'error'; message: string };
 
 /** typst.ts release the shipped compiler comes from; part of the Cache API key so a new compiler is never served from an old cache. */
-export const COMPILER_VERSION = '0.7.0';
+export const COMPILER_VERSION = '0.8.0-rc3';
 /** What the starting document needs (fonts it uses, packages it imports); fetched in parallel with the compiler. */
 const STARTER_FONTS = ['LibertinusSerif-Regular.otf', 'LibertinusSerif-Bold.otf', 'LibertinusSerif-Italic.otf', 'NewCMMath-Book.otf', 'DejaVuSansMono.ttf'];
 const STARTER_PACKAGES = ['preview/cetz/0.5.2', 'preview/oxifmt/1.0.0'];

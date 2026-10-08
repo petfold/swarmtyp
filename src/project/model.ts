@@ -3,7 +3,7 @@ import * as Y from 'yjs';
 
 export interface ProjectMeta { name: string; mainFile: string; typstVersion: string; created: number }
 export type FileEntry = { kind: 'text' } | { kind: 'blob'; ref: string; mime: string; size: number };
-export const TYPST_VERSION = '0.14.2'; // embedded in typst.ts 0.7.0 (S2)
+export const TYPST_VERSION = '0.15.0'; // embedded in typst.ts 0.8.0-rc3 (S14, D-28)
 export const TEXT_EXTENSIONS = ['.typ', '.bib', '.csv', '.json', '.yaml', '.yml', '.toml', '.txt', '.svg'];
 
 export function isTextPath(path: string) { return TEXT_EXTENSIONS.some((e) => path.toLowerCase().endsWith(e)); }
@@ -21,6 +21,19 @@ export function initProject(doc: Y.Doc, name: string, mainSource: string) {
     filesMap(doc).set('/main.typ', { kind: 'text' });
     textOf(doc, '/main.typ').insert(0, mainSource);
   });
+}
+
+/** `a` is a later Typst release than `b` (x.y.z). */
+export function laterTypst(a: string, b: string) {
+  const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  return false;
+}
+
+/** After a compile without errors, record this compiler's Typst version (T12), never an older one than the project has:
+ *  collaborators on an older app must not set it back. */
+export function recordTypstVersion(doc: Y.Doc) {
+  if (laterTypst(TYPST_VERSION, meta(doc).typstVersion)) projectMap(doc).set('typstVersion', TYPST_VERSION);
 }
 
 export function meta(doc: Y.Doc): ProjectMeta {
