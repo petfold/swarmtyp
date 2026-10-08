@@ -262,7 +262,18 @@ Result, part 2 (2026-10-08, `spikes/s13/s13.cjs --external`: a throwaway Freedom
 | Member-list entry sent by bee-js with that key, read by the page | first try |
 | The library's read rhythm, two minutes | 44 reads a minute, no rate limiting |
 
-What is left: the same run with Freedom's own Ant node and its own storage (writer and reader on different nodes, so the timings above are local ones), once the S13 profile's purchase is funded (`spikes/s13/payment.md`). And one design point for draft 13 / #20: a snapshot of *n* KB costs about *n*/4 provider calls a write at about a second each, so either the library keeps snapshots small, or Freedom gains a call that uploads raw bytes as a chunk tree in one go, or large snapshots go out as a manifest reference instead of a payload.
+Result, part 3 (2026-10-08, `spikes/s13/s13.cjs`: the S13 profile, Freedom's own Ant node with its own Starter batch, bought for this spike, `spikes/s13/payment.md`; the other side bee-js 13.1 on the Swarm Desktop node, so every byte crossed the network): **S13 passes. Writing from Freedom through `window.swarm` as it is works with Freedom's own node.**
+
+| Check | Result |
+|---|---|
+| Feed entries written by the page, read by bee-js on the Swarm Desktop node | 285–406 ms after the write; each write call 3–6 s |
+| Feed entries written by bee-js, read by the page | 430–440 ms |
+| 50 KB snapshot as a chunk tree (13 leaves and a root with `swarm_publishChunk`, wrapped by `swarm_writeSingleOwnerChunk`) | all 51,200 bytes read back by bee-js; the 15 calls took about 112 s, some 8 s a call through Ant |
+| Member-list entry sent with `swarm_sendGsoc` | at the address bee-js computes, read back on the first try; the send took about 25 s |
+| Member-list entry sent by bee-js, read by the page | first try |
+| The library's read rhythm, two minutes | 44 reads a minute, no rate limiting |
+
+Creating the vault left the node's key alone (`beeInjected: false`, node wallet unchanged). Consequences: D-27's choice (a) stands, and draft 13 (#20) is proven end to end. The write cost is the open design point: a snapshot of *n* KB costs about *n*/4 provider calls a write, at about a second each through Bee and several seconds through Ant, so either the library keeps snapshots small, or Freedom gains a call that uploads raw bytes as a chunk tree in one go, or large snapshots go out as a manifest reference instead of a payload.
 
 ## S14 — typst.ts 0.8.0-rc3 in swarmtyp (D-28)
 
