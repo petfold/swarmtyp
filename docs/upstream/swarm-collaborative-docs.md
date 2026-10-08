@@ -11,7 +11,7 @@ Target: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs (Solar Punk o
 | 8 | Fixed: `yjs` and `@ethersphere/bee-js` are peer dependencies and external |
 | 9 | Fixed: no runtime dependencies; Waku and GSOC moved to `src/experimental/`, not shipped; `y-webrtc` an optional peer loaded by dynamic `import()`. ESM build 54 KB (13 KB gzip), was 1.75 MB |
 | 10 | Fixed: `"type": "module"`, `.mjs`/`.cjs` behind an exports map |
-| 11 | **Closed although not done**: the reply says "Not in 0.1.0; keeping this open as an enhancement" and asks for Freedom's provider API. Superseded by draft 13, which answers that question |
+| 11 | **Closed although not done**: the reply says "Not in 0.1.0; keeping this open as an enhancement" and asks for Freedom's provider API. Superseded by #20 (draft 13), which answers that question |
 | 12 | Fixed: `DOC_READY`, `TRANSPORT_READY`, `PEERS_CONNECTED` (never for a lone peer), plus `DOC_SYNC_STATE` |
 | 13 | Answered: the snapshot was always the merged state; gate editing on `DOC_SYNC_STATE` |
 | 14 | Fixed: published bee-js 13 instead of the Apiary fork; `engines.node >= 22.12` |
@@ -19,7 +19,7 @@ Target: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs (Solar Punk o
 | 16 | Fixed: feeds re-read on channel open and every 15 s without a channel; state-vector exchange; `flush()`, `WRITE_PENDING`/`WRITE_DONE`. S12 found two faults in the last part, see 14 below |
 | 17 | Fixed: `CursorPosition.scope` |
 
-Drafts 13–16 at the end come from reading 0.1.0, from S12 and from reading Freedom 20152029 (2026-10-08). Not filed yet (D-27).
+Drafts 13–16 at the end come from reading 0.1.0, from S12 and from reading Freedom 20152029 (2026-10-08). Filed 2026-10-08 as #20–#23 (D-27).
 
 ---
 
@@ -132,7 +132,7 @@ Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/17
 
 ## 13. Write through Freedom's `window.swarm` as it is: a storage interface, a feed layout one identity can own, a member list kept as GSOC entries
 
-Not filed; swarmtyp chose this route (D-27, 2026-10-08) and runs spike S13 first. It replaces the earlier idea of reopening #11 and asking Freedom for a new method: Freedom needs no change.
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/20 (2026-10-08). swarmtyp chose this route (D-27) and runs spike S13 first. It replaces the earlier idea of reopening #11 and asking Freedom for a new method: Freedom needs no change.
 
 **Why.** Freedom no longer lets pages reach a node's HTTP API (freedom-browser #428, commit 1da190bd of 2026-09-28, in 0.8.7-rc.1 and rc.2 of 2026-10-08): requests from web content to any host on port 1633, on the port Freedom's own node uses, or to the origin of a configured external node are cancelled; "dApps that need the node use `window.swarm`". The provider (`src/renderer/lib/swarm-provider.js`, freedom-browser 20152029) offers `swarm_requestAccess`, `swarm_getCapabilities`, `swarm_publishData`, `swarm_publishFiles`, `swarm_publishChunk`, `swarm_readChunk`, `swarm_createFeed`, `swarm_updateFeed`, `swarm_listFeeds`, `swarm_writeFeedEntry`, `swarm_readFeedEntry`, `swarm_writeSingleOwnerChunk`, `swarm_readSingleOwnerChunk`, `swarm_getSigningIdentity`, `swarm_getMessagingIdentity`, `swarm_sendPss`, `swarm_sendGsoc`, `swarm_subscribe`, `swarm_unsubscribe`. It signs every write itself, with its identity for the page's site; a page cannot hand it a key. 0.1.0 owns its feeds by keys the page derives (a room-derived key, the identity key, a key per tab), so none of its writes can go through Freedom as it stands.
 
@@ -153,7 +153,7 @@ Not filed; swarmtyp chose this route (D-27, 2026-10-08) and runs spike S13 first
 
 ## 14. `WRITE_DONE` fires while a write is still queued; a failed write also ends in `WRITE_DONE`
 
-Not filed. Evidence: S12 (`spikes/s12/check-collab-0.1.mjs`, mock Bee answering each SOC upload after 1.5 s, 0.1.0 from npm).
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/21 (2026-10-08). Evidence: S12 (`spikes/s12/check-collab-0.1.mjs`, mock Bee answering each SOC upload after 1.5 s, 0.1.0 from npm).
 
 **`WRITE_DONE` too early.** One edit at 0 s and another at 1.0 s:
 
@@ -174,7 +174,7 @@ Worth a README line: `beforeunload` cannot await `flush()`. The pattern is to ca
 
 ## 15. A read-only participant: let `stamp` be optional
 
-Not filed. Evidence: S12.
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/22 (2026-10-08). Evidence: S12.
 
 The README says there is no read-only participant mode. In S12 a visitor with no batch id, or with a batch the node does not have, got `DOC_ERROR` from `start()` and init stopped there: no `DOC_READY`, no `DOC_SYNC_STATE`. But the member poll and the 15 s snapshot poll ran anyway: the visitor had the other member's text after 8 s and followed a later edit, while retrying a directory write the node refused (5 times in 28 s, since its own identity is never listed). So reading already works, unannounced, and the gate the README tells apps to use never opens.
 
@@ -184,6 +184,6 @@ Proposal: `infra.stamp` optional. Without it, skip `validateStamps` and every wr
 
 ## 16. README: what protects the WebRTC fast path
 
-Not filed; small.
+Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/23 (2026-10-08).
 
 "Who can write what" says deltas sent over WebRTC carry a signature checked against the sender's session address. That holds for the JSON `doc` notifications. The SwarmRtc channel also carries binary frames, every local update forwarded at once and the reply to a state vector, and `setupDataChannel` applies those without a signature check. Outsiders still cannot inject: the channel's DTLS fingerprint comes in the SDP the peer wrote to its own signal feed, so only that session key's holder can send on it. Saying that would be accurate; apps quote the sentence in their own threat models (swarmtyp's T2 did).

@@ -207,7 +207,7 @@ Freedom writes. Options: (a) today's `window.swarm`, changing only the library (
 
 Filing. Options: (a) issues for all four now; (b) issues for 14–16 now and 13 after S13 with its evidence; (c) talk to the maintainer first; (d) pull requests only. Leaning (b).
 
-**Decisions (Peter, 2026-10-08).** Freedom writes: **(a)**, after spike S13; (b) is the fallback if S13 fails. The room-format change lands with the D-26 move, which breaks the format anyway. Filing: **all four drafts as issues now**, from the owner's account, after the owner reviewed each one.
+**Decisions (Peter, 2026-10-08).** Freedom writes: **(a)**, after spike S13; (b) is the fallback if S13 fails. The room-format change lands with the D-26 move, which breaks the format anyway. Filing: **all four drafts as issues now**, from the owner's account, after the owner reviewed each one. Filed 2026-10-08: #20 (13, the Freedom route), #21 (14, write signals), #22 (15, read-only participants), #23 (16, README).
 
 Decide before the D-26 move (draft 14 shapes its unload guard) and before the user guide says anything new about Freedom.
 
