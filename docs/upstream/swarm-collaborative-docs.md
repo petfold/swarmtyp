@@ -192,7 +192,7 @@ Filed: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/23 (202
 
 ## 17. Encryption, the way Fileverse does it
 
-Not filed. Analysis 2026-10-09, from Fileverse's dDocs and dSheets (`../fileverse-ddoc`, `../fileverse-dsheets`, their `sync-local/crypto` and our Swarm storage modules there). Shared need: swarmtyp's private projects (D-12, Phase 4) and the Fileverse forks (`plan.md`, "Alongside swarmtyp").
+Filed as part of #20 on 2026-10-09: https://github.com/Solar-Punk-Ltd/swarm-collaborative-docs/issues/20#issuecomment-6068266427. Analysis from Fileverse's dDocs and dSheets (`../fileverse-ddoc`, `../fileverse-dsheets`, their `sync-local/crypto` and our Swarm storage modules there). Shared need: swarmtyp's private projects (D-12, Phase 4) and the Fileverse forks (`plan.md`, "Alongside swarmtyp").
 
 **How Fileverse encrypts.**
 - *Live editing.* Each document has a `roomKey`, a secp256k1 private key. Every Yjs update is ECIES-encrypted to that key's public key before it reaches Fileverse's sync server, which stores and relays only ciphertext; whoever holds `roomKey` decrypts.
