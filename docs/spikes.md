@@ -251,7 +251,18 @@ Result, part 1 (2026-10-08, dry run on a throwaway profile without storage; `spi
 - Without storage every write fails at once with "no-usable-stamps".
 - A driver bug worth remembering: `identity.hasVault()` and `isUnlocked()` answer `{ hasVault }` and `{ isUnlocked }`; treating them as booleans skipped the vault, and the feed prompt then kept its approve button disabled until every request timed out.
 
-Part 2, the writes, runs once the S13 profile's storage is bought (`spikes/s13/payment.md`).
+Result, part 2 (2026-10-08, `spikes/s13/s13.cjs --external`: a throwaway Freedom profile that takes the Swarm Desktop node as its own, so Freedom stamps with that node's immutable swarmtyp batch; no purchase): **every write the library needs goes through `window.swarm` as it is.**
+
+| Check | Result |
+|---|---|
+| Feed entries written by the page with `swarm_writeSingleOwnerChunk` at `keccak256(topic ‖ index)` | read back by bee-js as an ordinary feed owned by the page's app-scoped identity, 14–131 ms after the write |
+| Feed entries written by bee-js, read by the page with `swarm_readFeedEntry` | 0.3 s |
+| A 50 KB snapshot | `swarm_publishData` returns a manifest (a 384-byte root), not the data's chunk tree, so the page built the tree with `swarm_publishChunk` (13 leaves, then a root with the whole length as span) and wrapped the root in a feed entry; bee-js read back all 51,200 bytes. About 17 s for the 15 provider calls, roughly 1 s a call |
+| Member-list entry sent by the page with `swarm_sendGsoc` | at exactly the address bee-js computes with Freedom's derivation (`freedom-gsoc-v1:`), read back on the first try |
+| Member-list entry sent by bee-js with that key, read by the page | first try |
+| The library's read rhythm, two minutes | 44 reads a minute, no rate limiting |
+
+What is left: the same run with Freedom's own Ant node and its own storage (writer and reader on different nodes, so the timings above are local ones), once the S13 profile's purchase is funded (`spikes/s13/payment.md`). And one design point for draft 13 / #20: a snapshot of *n* KB costs about *n*/4 provider calls a write at about a second each, so either the library keeps snapshots small, or Freedom gains a call that uploads raw bytes as a chunk tree in one go, or large snapshots go out as a manifest reference instead of a payload.
 
 ## S14 — typst.ts 0.8.0-rc3 in swarmtyp (D-28)
 

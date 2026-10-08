@@ -3,6 +3,8 @@
 // storage in freedom-setup.cjs; the other side is bee-js 13.1 on the Swarm Desktop node (127.0.0.1:1633).
 //   node spikes/s13/s13.cjs            results to spikes/s13/results.json
 //   --dry   any profile (S13_DEVHOME), no storage needed: writes fail, everything else runs; results to results-dry.json
+//   --external  any profile (S13_DEVHOME) that takes Swarm Desktop (127.0.0.1:1633) as Freedom's node: Freedom stamps
+//               with that node's batches, no purchase needed; results to results-external.json
 // Never calls identity.injectAll: that wipes the node's key, and with it the wallet that owns the storage.
 const { _electron: electron } = require('/home/test/projects/freedom-browser/node_modules/playwright');
 const fs = require('node:fs');
@@ -12,8 +14,9 @@ const { execSync } = require('node:child_process');
 const repo = '/home/test/projects/freedom-browser';
 const devHome = process.env.S13_DEVHOME || '/home/test/freedom-s13/devhome';
 const DRY = process.argv.includes('--dry');
-const vaultPasswordFile = DRY ? `${devHome}/../vault-password.txt` : '/home/test/freedom-s13/vault-password.txt';
-const resultsFile = `${__dirname}/${DRY ? 'results-dry' : 'results'}.json`;
+const EXTERNAL = process.argv.includes('--external');
+const vaultPasswordFile = DRY || EXTERNAL ? `${devHome}/../vault-password.txt` : '/home/test/freedom-s13/vault-password.txt';
+const resultsFile = `${__dirname}/${DRY ? 'results-dry' : EXTERNAL ? 'results-external' : 'results'}.json`;
 const NODE_WALLET = '0xc555a6efc44fae25e5a5755301f957a7f82d5c16';
 const BEE = 'http://127.0.0.1:1633';
 const SITE = 'bzz://fff4e38ecaeb5253c1c7eae0e24daf655cc9ae995df806e507af0094de072910/'; // the S11 sample site: a small page to be the origin
@@ -37,6 +40,10 @@ const results = { started: new Date().toISOString() };
   await win.waitForLoadState('domcontentloaded');
   for (let i = 0; i < 30; i++) {
     const open = await win.evaluate(() => { const d = document.getElementById('external-node-candidates-modal'); return !!(d && d.open); });
+    if (open && EXTERNAL) { // "Use External" for the Swarm row, managed for anything else
+      const chose = await win.evaluate(() => { const out = []; for (const row of document.querySelectorAll('#external-node-candidates-list .external-node-row')) { const ext = /bee|swarm/i.test(row.dataset.protocol); row.querySelector(`input[value="${ext ? 'external' : 'managed'}"]`)?.click(); out.push(`${row.dataset.protocol}:${ext ? 'external' : 'managed'}`); } document.getElementById('external-node-candidates-submit')?.click(); return out; });
+      log('external-node dialog', JSON.stringify(chose)); break;
+    }
     if (open) { await win.evaluate(() => (document.getElementById('external-node-candidates-managed') || document.getElementById('external-node-candidates-close'))?.click()); break; }
     await sleep(1000);
   }
@@ -47,7 +54,7 @@ const results = { started: new Date().toISOString() };
   log('node', JSON.stringify(results.node));
   if (!DRY && !st.readiness.ok) throw new Error('Freedom node cannot publish yet: ' + st.readiness.message);
   const wallet0 = st.account?.walletAddress;
-  if (!DRY && wallet0 !== NODE_WALLET) throw new Error('node wallet changed: ' + wallet0);
+  if (!DRY && !EXTERNAL && wallet0 !== NODE_WALLET) throw new Error('node wallet changed: ' + wallet0);
 
   // A vault for Freedom's signing identities (created once, never injected into the node).
   let password = fs.existsSync(vaultPasswordFile) ? fs.readFileSync(vaultPasswordFile, 'utf8').trim() : null;
@@ -131,29 +138,29 @@ const results = { started: new Date().toISOString() };
     log('feed to Freedom', i, JSON.stringify(results.feedToFreedom.at(-1)).slice(0, 300));
   }
 
-  // 2. A 50 KB snapshot: publishData, then its root chunk wrapped in a feed entry, as bee-js does above 4 KB.
+  // 2. A 50 KB snapshot. publishData answers with a manifest (a 384-byte root), not the data's own chunk tree, so the
+  // page builds the tree with publishChunk: 4 KB leaves, then a root holding their addresses with the whole length as
+  // span, and wraps that root in the feed entry: the bytes bee-js writes for a payload above 4 KB.
   const big = Array.from({ length: 1700 }, (_, k) => `line ${k} of the s13 ${run} snapshot\n`).join('').slice(0, 51200);
-  const pub = await call('publishData', { data: big, contentType: 'application/octet-stream' });
-  results.big = { publish: pub.ok ? pub.ok : pub };
-  log('publishData', JSON.stringify(pub).slice(0, 300));
-  const ref = pub.ok?.reference;
-  if (ref) {
-    const root = await call('readChunk', { reference: ref });
-    results.big.rootChunk = root.ok ? Object.keys(root.ok) : root;
-    log('readChunk keys', JSON.stringify(results.big.rootChunk));
-    const rootBytes = typeof root.ok?.data === 'string' ? Buffer.from(root.ok.data, 'base64') : null;
-    const topicC = Topic.fromString(`swarmtyp/s13/${run}/c`);
-    if (rootBytes) {
-      // Expect span (8 bytes, little-endian) + payload; pass the payload with the span as a number.
-      const span = Number(rootBytes.readBigUInt64LE(0));
-      const payloadB64 = rootBytes.subarray(8).toString('base64');
-      const w = await call('writeSingleOwnerChunk', null, `{ identifier: '${feedId(topicC, 0)}', data: Uint8Array.from(atob('${payloadB64}'), (c) => c.charCodeAt(0)), span: ${span} }`);
-      results.big.wrap = w.ok ? 'ok' : w;
-      let got = null;
-      for (let n = 0; n < 60 && got === null; n++) { try { const r = await bee.feed.makeReader(topicC, owner).downloadPayload({ index: 0 }); got = r.payload.toUtf8(); } catch { await sleep(3000); } }
-      results.big.readBack = got === big; results.big.bytes = got?.length ?? 0; results.big.span = span;
-      log('big snapshot read back', results.big.readBack, results.big.bytes);
-    }
+  const topicC = Topic.fromString(`swarmtyp/s13/${run}/c`);
+  results.big = { publishDataNote: 'publishData returns a manifest reference; not usable for a payload feed' };
+  const tree = await evalPage(`(async () => { try {
+    const data = new TextEncoder().encode(${JSON.stringify(big)});
+    const refs = [];
+    for (let i = 0; i < data.length; i += 4096) refs.push((await window.swarm.publishChunk({ data: data.slice(i, i + 4096) })).reference);
+    const root = new Uint8Array(refs.length * 32);
+    refs.forEach((h, k) => root.set(Uint8Array.from(h.replace(/^0x/, '').match(/../g).map((x) => parseInt(x, 16))), k * 32));
+    const rootRef = (await window.swarm.publishChunk({ data: root, span: data.length })).reference;
+    const w = await window.swarm.writeSingleOwnerChunk({ identifier: '${feedId(topicC, 0)}', data: root, span: data.length });
+    return { leaves: refs.length, rootRef, write: w ? 'ok' : w };
+  } catch (e) { return { error: e.message, code: e.code }; } })()`);
+  results.big.tree = tree;
+  log('chunk tree', JSON.stringify(tree));
+  if (!tree.error) {
+    let got = null;
+    for (let n = 0; n < 60 && got === null; n++) { try { const r = await bee.feed.makeReader(topicC, owner).downloadPayload({ index: 0 }); got = r.payload.toUtf8(); } catch { await sleep(3000); } }
+    results.big.readBack = got === big; results.big.bytes = got?.length ?? 0;
+    log('big snapshot read back', results.big.readBack, results.big.bytes);
   }
 
   // 3. Member-list entries as GSOC: Freedom sends, bee-js computes the same key and reads; bee-js sends, Freedom reads.
