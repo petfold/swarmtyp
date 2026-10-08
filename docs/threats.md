@@ -19,7 +19,7 @@ A gateway operator; another app served from the same gateway origin; another col
 The project id is a capability. Whoever has it reads all snapshots and may append. Mitigation now: treat links as secrets; the UI says so when it shows one. Phase 4: project key in the fragment, payloads encrypted before they reach the library (upstream hook, D-12). Vandalism is recoverable because every snapshot stays on Swarm: rollback is a UI feature, not a protocol change.
 
 ### T2 — Impersonation
-Feed updates are signed by the owner key; deltas are signed and the library drops unsigned or invalid ones. A collaborator cannot write into another's `_doc` feed. Residual risk: a peer *claims* another's nickname. Show addresses (shortened) next to names.
+Feed updates are signed by the owner key; deltas sent as notifications are signed and the library drops unsigned or invalid ones. The live updates on a WebRTC channel are not signed one by one, but the channel's DTLS fingerprint arrives in the SDP the peer wrote to its own signal feed, so only that peer can send on it (checked in both adcb7d5 and 0.1.0, 2026-10-08). A collaborator cannot write into another's `_doc` feed. Residual risk: a peer *claims* another's nickname. Show addresses (shortened) next to names.
 
 ### T3 — Gateway sees everything
 In gateway mode the Bee operator sees plaintext snapshots, blobs and signalling, can log who edits what, and can refuse writes. It cannot forge writes (T2). Mitigations: encryption (Phase 4) for content; a local node (Swarm Desktop) for users who care; make the gateway URL a plain setting, never a hardcoded default.
@@ -49,7 +49,7 @@ Nothing on Swarm can be deleted. Every snapshot, blob and PDF persists while a s
 Two tabs with one key write one feed and may corrupt it or drop updates (S6). Mitigated 2026-09-05: each tab signs with `keccak256(identity key ‖ session id)` (`src/collab/identity.ts`), so the same person in two tabs is two members with two feeds; the member list shows both. The identity key itself never signs. Upstream asked for a session id in feed names instead (#6).
 
 ### T12 — Upstream drift
-typst.ts lags typst; a typst release can change layout. `project.typstVersion` records what compiled the project; the app warns when its compiler differs. Pin versions and keep the compiler wrapper replaceable (D-04).
+typst.ts lags typst; a typst release can change layout. `project.typstVersion` records what compiled the project; the app is meant to warn when its compiler differs, which is not built yet (D-28). Pin versions and keep the compiler wrapper replaceable (D-04).
 
 ### T13 — Large documents
 A long document with many images can push the worker's memory or make recompiles slow. Debounce, monotonic ids, and (if S2 finds it) incremental compile. Show a "compiling" indicator rather than freezing the preview.

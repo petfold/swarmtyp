@@ -209,3 +209,47 @@ Result, part 2 (2026-09-05): **HTML export is not in the web build.** `typst-ts-
 
 Result, part 3 (2026-09-05): **not run, by decision.** Typst GmbH is building HTML export itself: tracking issue typst/typst#5512 (NLnet-funded, six months of full-time work), the roadmap lists "HTML export (in progress)", and 0.15.0 (2026-06-15) added MathML for equations, `lang` on the root element, image dimensions, and an experimental "bundle" export that writes several output files from one project. Still open there: CSS (deferred to a later phase, with the stated plan to emit CSS from set rules as an option), shapes and curves, and any timeline for leaving the feature flag. The owner's call: do not build what Typst is building. swarmtyp's flowing site waits for the exporter; when it leaves the flag, the work on our side is the typst.ts web-build flag (part 2) and a thin stylesheet or Typst's own CSS option. Watch #5512 and the 0.16 notes.
 
+
+## S12 — swarm-collaborative-docs 0.1.0 (D-26)
+
+Question: does 0.1.0 (npm, 2026-10-01) fix what S5, S6 and the Phase 2 e2e found, and what does it change for swarmtyp: convergence without a WebRTC channel, the write signals the unload guard needs (T15), and a visitor who has no batch?
+
+Method: the published package with `@ethersphere/bee-js` 13.1.0 and `yjs` 13.6.30 in Node 22, against an in-memory mock of Bee's HTTP API (`/stamps`; SOC uploads stored by address and refused without a batch the node owns; `/chunks` reads served back; feed head lookups answer 404, so the library walks indices), with a transport that never opens a channel, so every byte goes through the feeds. No network, no stamp spent: `spikes/s12/check-collab-0.1.mjs`. The rest from reading the source at `master` b466597.
+
+Result (2026-10-08): **every Phase 2 gap upstream #6–#17 named is closed except #11; two new faults in the write signals; reading without a batch half-works.**
+
+- **Feeds alone converge.** Two sessions, no channel, three rounds of edits each way: every edit arrived in 0.3 to 15.0 s (the re-read of peers without a channel runs every 15 s) and the texts ended equal. With adcb7d5 a member's feed was read once at join, so without a channel nothing arrived until a reload. For M2 a failed NAT traversal now costs latency, not divergence.
+- **Idle cost.** Two idle sessions for 60 s: 0 stamped writes, 25 chunk reads.
+- **`WRITE_DONE` fires early.** Edits at 0 s and 1.0 s with 1.5 s per upload: `WRITE_DONE` at 2.03 s after the first snapshot while the second was still queued; it landed at 3.54 s.
+- **A failed write ends in `WRITE_DONE` too.** With uploads answering 500, `flush()` resolved, then `DOC_ERROR`, then `WRITE_DONE`. Nothing retries the write; the state reaches the feed only with the next edit.
+- **No batch, or a batch the node lacks:** `DOC_ERROR` at `start()`, never `DOC_READY` or `DOC_SYNC_STATE`; yet the polls run and the visitor read the member's text within 8 s and followed a later edit, while retrying a refused directory write (5 times in 28 s).
+- **Package.** ESM 54 KB (13 KB gzip) against 1.75 MB (458 KB gzip) for the adcb7d5 build in `vendor/`; it imports only `@ethersphere/bee-js` and `yjs`, plus a dynamic `import('y-webrtc')` for the signalling-server transport, so Vite still needs `y-webrtc` to resolve (swarmtyp's stub alias stays).
+- **Wire format.** Incompatible with adcb7d5: topics derive from the room key (`swarmdoc:v1:ns:<secret>`), membership moved from the shared `<topic>_members` feed to a directory feed signed with a room-derived key plus one announce feed per identity, session keys are `keccak256("swarmdoc-session:v1:<identity key>:<session id>")`. Projects made with the current build cannot be opened by a 0.1.0 build.
+- **Public read gateway.** `download.gateway.ethswarm.org/chunks/<ref>` answers 200 with `Access-Control-Allow-Origin: *` and `/feeds/<owner>/<topic>` 404 for an unknown feed (2026-10-08), so the library's read path works there, which matters for a read-only mode (upstream draft 15).
+- Not measured: real Bee timings (the mock answers at once; S5's 30 s to minutes for the handshake through signal feeds is the number to measure again), WebRTC, two machines. The e2e test against the Swarm Desktop node covers those once swarmtyp moves.
+
+Consequences: D-26 (project key, links, the move); D-27 (what to ask upstream, drafts 13–16 in `docs/upstream/swarm-collaborative-docs.md`).
+
+## S13 — Writing from Freedom through today's `window.swarm` (D-27)
+
+Question: can a page in Freedom 0.8.7 write everything the collaboration library writes, through `window.swarm` as it is, in a form a peer on a Bee node reads, and the reverse, with no full node anywhere?
+
+Method: a small test page opened as `bzz://` in Freedom (the Playwright harness in `spikes/freedom/`), Freedom's publishing setup done so its node is a light node with a usable batch (the owner's purchase, with xDAI), and a Node script on the Swarm Desktop node for the other side. Small payloads only.
+1. Feed entries: the page writes indices 0–2 of a topic with `swarm_writeSingleOwnerChunk` at `keccak256(topic ‖ index)`; the script reads them with bee-js `makeFeedReader(topic, owner).downloadPayload({ index })`. Then the script writes, and the page reads with `swarm_readFeedEntry`.
+2. A 50 KB payload: `swarm_publishData`, then its root chunk wrapped with `swarm_writeSingleOwnerChunk` and `span`; the bee-js reader returns all 50 KB.
+3. Member list: the page sends `swarm_sendGsoc` on topic *T*₀; the script computes the identifier and key from *T*₀ with bee-js (`gsocMine` towards `keccak256("freedom-gsoc-v1:" + T₀)`), reads the chunk at its address, and writes *T*₁ itself; the page reads *T*₁ with `swarm_readSingleOwnerChunk`.
+4. Timings: write to visible on the other side, in both directions; key computation per topic; read-budget use of a two-person room over ten minutes.
+
+Exit: 1–3 work on mainnet between Freedom 0.8.7 and the Swarm Desktop node, and 4 fits the library's polling (2 s signal, 5 s member list, 15 s snapshots). If not, D-27 falls back to (b).
+
+Result: not run yet.
+
+## S14 — typst.ts 0.8.0-rc3 in swarmtyp (D-28)
+
+Question: does swarmtyp work on typst.ts 0.8.0-rc3 (Typst 0.15.0) as well as on 0.7.0, and what does the move cost in bytes and time?
+
+Method: on a branch, move `@myriaddreamin/typst.ts`, `typst-ts-web-compiler` and `typst-ts-renderer` to 0.8.0-rc3; bump `COMPILER_VERSION` and `TYPST_VERSION`; rebuild the gzipped compiler with `tools/build-assets.mjs`. Then: the S2 one-word incremental edit, the S4 lazy-font load (a text-only document fetches no maths face), the S10 canvas render per page; `pnpm test` and `pnpm test:e2e` (the smoke test asserts the starter's page count, the collaboration test the merge); import one package whose newest version needs Typst 0.15; gzip size of compiler and renderer against 0.7.0; the starter (CeTZ 0.5.2) side by side with 0.7.0's render.
+
+Exit: the suites pass and nothing is slower or larger than the numbers above justify; then the move goes ahead with the T12 warning. A regression keeps 0.7.0 (D-28 option (a)).
+
+Result: not run yet.

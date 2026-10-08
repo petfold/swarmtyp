@@ -18,6 +18,8 @@ Monaco is the library's proven example, but it is large, and its strengths (Type
 
 typst.ts is maintained, published on npm, and used by tinymist's preview. Keep swarmtyp's compiler wrapper thin (one module in `src/compile/`) so a self-built `wasm-bindgen` wrapper around `typst` could replace it if typst.ts falls behind or its API blocks S2/S3. Closed 2026-09-05 after S1–S4, S9, S10: every capability the design needs exists in 0.7.0 (shadow filesystem, synchronous package registry, lazy fonts, incremental compile, PDF, semantic tokens, SVG and canvas). Accepted: one Typst release of lag (0.7.0 embeds 0.14.2; 0.8.0-rc3 embeds 0.15.0). Phase 1 pins **0.7.0**; move to 0.8.0 when it is final and re-run S2. Known upstream bugs: typst.ts #888, #889 (`docs/upstream/typst-ts.md`).
 
+Status 2026-10-08: no 0.8.0 final. The newest release is still 0.8.0-rc3 (2026-06-29); `main` has embedded Typst 0.15.1 since 2026-08-30 and added PDF standards to the web compiler and a unified compiler interface (#877); #888–#892 have no reply. typst.app runs 0.15.1, swarmtyp 0.14.2, so the lag is now two Typst releases, not one. D-28 (decided 2026-10-08) replaces "when it is final": move to 0.8.0-rc3 after spike S14.
+
 ## D-05 — No server, ever — DECIDED
 
 No signalling server, relay, serverless function, or "temporary" backend. When a Swarm-native mechanism cannot carry a feature at acceptable quality, the feature degrades or waits. This is the point of the project.
@@ -62,7 +64,7 @@ Follows from D-05 (yWebrtc needs a server) and from what released Bee supports (
 
 The library example uses Google's STUN. Options: keep it, run a Solar Punk STUN, or ship a list. TURN stays optional and user-configured (Phase 4).
 
-## D-16 — Project id = genesis reference — PROPOSED
+## D-16 — Project id = genesis reference — SUPERSEDED by D-26 (2026-10-08)
 
 The reference of the immutable initial `project` JSON upload is the id and the `SwarmDoc` topic. Unique, verifiable, no registry needed.
 
@@ -105,6 +107,8 @@ Decide before the first public post, after M1 at the earliest.
 Context (S1, 2026-09-05). The design assumes "a Bee node or gateway". In 2026 no public Swarm gateway renders arbitrary content: `download.gateway.ethswarm.org` forces downloads, `api.gateway.ethswarm.org`, `gateway.fairdatasociety.org` and `bzz.link` allow-list hashes and redirect the rest to a forbidden page, `gateway.ethswarm.org` is a landing page. Reads through them are fine for data (dappdata S2 used them for feeds), not for hosting a page. A user with Swarm Desktop or a light node is unaffected. Options: (a) Solar Punk runs a read gateway for the app bundle, fonts and packages (reads need no stamp; cost is bandwidth), with writes still going to the user's own node or a sponsoring gateway per D-07; (b) ask bzz.link's operator to allow-list swarmtyp's release feed; (c) require a local node (Swarm Desktop) and say so, which excludes the "open a link" onboarding; (d) mirror the release on ordinary web hosting as well, which contradicts D-05 in spirit though not in mechanism; (e) Freedom Browser (tested 2026-09-05, S1): native `bzz://` with a per-hash origin and a bundled light node, so a `bzz://swarmtyp.eth/` link works with no node and no gateway, at 36 KB/s cold in ultra-light mode today (a five-minute first load, then cached) and with a large-body truncation bug that the ranged loader in S1 sidesteps; writes would go through its `window.swarm` provider, which needs an upstream transport in swarm-collaborative-docs. Leaning (a) plus (b) for the web, (e) as the recommended client; decide before M1 is demonstrated to anyone outside.
 
 **Decision (Peter, 2026-09-05).** In-browser Swarm clients are the path: Freedom Browser now, weeb-3 when its write path is verified. No Solar Punk gateway is planned; swarmtyp must work well in Freedom (per-hash `bzz://` origin, ranged loading, `window.swarm` for writes once swarm-collaborative-docs has a provider transport) and in weeb-3 when it is ready. The gateway requirements below stay as reference in case someone runs one; a plain HTTP gateway remains a supported read path for people with their own node.
+
+Status 2026-10-08 (from Freedom's source, not yet tried with swarmtyp). Freedom 0.8.7 (rc.1 and rc.2 released 2026-10-08; commit 1da190bd, freedom-browser #428) cancels every request a page makes to a node API: any host on port 1633, the port Freedom's own node uses, and the origin of a configured external node. "dApps that need the node use `window.swarm`." So the interim in the user guide, where swarmtyp in Freedom writes through Swarm Desktop at `127.0.0.1:1633`, stops working with 0.8.7. Reads fall back to the public read gateway (D-25 item 4). Writes from Freedom can use today's `window.swarm` once the library has a storage interface, a feed layout one Freedom identity can own, and a member list kept as GSOC entries (D-27, upstream draft 13, spike S13 first). Freedom also gained a publishing setup in which its node buys immutable batches, so the stamp side exists there.
 
 What a Solar Punk read gateway must do for (a), to raise with whoever would run it (2026-09-05; none exists on record yet):
 1. Serve `GET /bzz/<ref>/<path>` inline: no `Content-Disposition: attachment`, Bee's content types passed through (`text/javascript` for `.mjs`, `application/wasm`), `Accept-Ranges` and `206` for range requests (the app loads large assets in 1 MB ranges), `Cache-Control: immutable` for content addresses.
@@ -156,6 +160,8 @@ S11 part 1 (2026-09-05): the paged site works from the browser compiler and rend
 
 Mobile (2026-09-05, owner's question): a paged site is exact but does not reflow; on a phone the SVG page scales to the width, so an A4 page becomes about 4–5 pt text and needs pinch-zoom or sideways reading. Acceptable for a paper someone opens on a laptop, poor for a guide or a blog. So the paged form is for documents that are pages, and anything meant to be read on phones waits for Typst's HTML export or is authored as HTML (the guide, D-25).
 
+Typst status 2026-10-08: typst/typst#8865 (open, waiting on its author) adds `html(styles: …)`, a "semantic" or a "presentational" profile (the latter "more similar to the paged export"), written by default as an embedded stylesheet. If it lands, the flowing site needs no swarmtyp themes. Still behind the `html` feature; Typst 0.15.1 is the latest release and there is no 0.16 date.
+
 Not decided: whether the paged site is the default or the fallback; whether swarmtyp maintains themes at all; the `target()` conventions we recommend to authors; wallet-only name purchase versus a sponsored `.id.gwei` subname for wallet-less users (D-23). Spike S11 first.
 
 ## D-25 — What `swarmtyp.gwei` and its subdomains point at — PROPOSED (2026-09-05)
@@ -173,3 +179,48 @@ Bee and Swarm Desktop cannot resolve `.gwei` yet (2026-09-05): Bee's ENS client 
 
 Costs: names are yearly (the manage panel shows `swarmtyp.gwei` expiring 2027-09-05; RENEW is a transaction, and a lapsed name drops the app's address), so the renewal goes on the owner's calendar and into the release checklist; two or three owner transactions for subdomains; the app-through-gateway test before the root moves; the read fallback is a small change in `src/swarm/` plus a status line saying which source is in use.
 
+## D-26 — Project key and links under swarm-collaborative-docs 0.1.0 — DECIDED (2026-10-08)
+
+Context. swarmtyp runs the library at adcb7d5. 0.1.0 (npm, 2026-10-01) closes upstream #6–#17 except #11 (S12), and moving to it follows from D-02. It changes what names a project: a room is a secret key, every feed address is a hash of that key, the key travels only in the link's fragment, and nothing about it is written to Swarm. Today the project id is the genesis reference (D-16), which is also the topic. 0.1.0 cannot read feeds written by adcb7d5. Four choices follow.
+
+Key. Options: (a) a random key from `createRoomKey()` at Share, with no genesis upload; the name, main file and Typst version already live in the document's `project` map; (b) the genesis reference as the key, which keeps today's `#/p/<64 hex>` links and the uploaded record. But that reference is the address of an unencrypted chunk that the uploading node and its storers hold, and its content names swarmtyp, so anyone who handles the chunk can derive every feed of the project: the weakness 0.1.0 removed. Leaning (a). If chosen, it supersedes D-16.
+
+Link. Options: (a) `#/p/<key>/<creator address>`, swarmtyp's own shape; (b) the library's invite inside the route, `#/p/?v=1&k=<key>&h=<creator>`, written and read with `encodeRoomInvite` and `decodeRoomInvite`, so the invite's version and fields stay upstream's; (c) `#/p/<key>` alone, the shortest, but without the creator a joiner finds members only through the directory feed. Leaning (b): reuse rather than a second format.
+
+Address bar. Options: (a) the key stays in the hash, as the project id does today: reload works, and the key is in browser history; (b) strip it after reading and keep the invite in storage, as the library's demo does, which on a shared origin moves the key where other apps can read it (T14). Leaning (a).
+
+Existing projects. Today's links stop working. Options: (a) accept the break, and when an old `#/p/<64 hex>` link opens on a device that still holds its IndexedDB copy, offer "Share again as a new project" with that content; (b) accept the break with a message only; (c) keep a reader for the old feed layout so any device can import an old project from Swarm (the old library at 1.75 MB, or about a hundred lines on bee-js). Leaning (a): only test projects exist, and (a) costs one button.
+
+The move itself, not up for decision: the npm package replaces `tools/collab/build-lib.mjs`, `vendor/`, its Vite alias and `src/collab/lib.d.ts`; published bee-js 13.1 replaces the Apiary fork and the `bee-js13` alias in `tools/deploy`; the `y-webrtc` stub stays (the library imports it dynamically); the identity key and `sessionId()` go to the library and `sessionKey()` goes; the `y-indexeddb` store is named after `Room.id`, never the key (T14); editing waits for `DOC_READY` and `DOC_SYNC_STATE.synced`, and a visitor still never initialises the starter; chips group sessions by identity; carets carry the file path as `scope`; `flush()` runs before stop, Leave and unload, and the unload prompt waits for it instead of trusting `WRITE_DONE` (upstream draft 14); the one STUN setting becomes an ICE list (D-15 stays open). Then `e2e/collab.spec.ts` on the Swarm Desktop node, then M2. Docs in the same change: `design.md` §4.3, §4.12, §5, `threats.md` T1, T11, T15, the user guide.
+
+Consequence of any option: in 0.1.0 the identity key signs the announce feed, so the identity address shows in every room the person joins, and T11's "the identity key itself never signs" no longer holds. Fine for the device key, a pseudonym. For D-23's wallet root it means the library gets the derived collaboration key, never the wallet's own.
+
+**Decisions (Peter, 2026-10-08).** Key: **(a)**, a random key from `createRoomKey()`, no genesis upload; D-16 is superseded. Link: **(b)**, the library's invite inside the route (`#/p/?v=1&k=<key>&h=<creator>`, `encodeRoomInvite`/`decodeRoomInvite`), with a small `v=1` decoder of our own if upstream ever drops it. Address bar: **(a)**, the key stays in the URL; revisit when Phase 3's dappdata project list can keep keys encrypted. Existing projects: **(a)**, accept the break and offer "Share again as a new project" from a device's local copy, with a hint that one person does it and sends the new link.
+
+Decide before the move starts, the next Phase 2 step.
+
+## D-27 — Writing from Freedom, and what to ask upstream — DECIDED (2026-10-08)
+
+Context. Freedom 0.8.7 blocks pages from every node API (D-22 status), so `window.swarm` is the only way to write there, and it signs with Freedom's identity for the site, never with a key the page holds. 0.1.0's feeds are owned by keys the page derives: a room-derived key for the member list, the identity key, a key per tab. A closer reading of Freedom (commit 20152029, 2026-10-08) found what makes it work anyway: `swarm_writeSingleOwnerChunk` writes a chunk at any identifier, built exactly as bee-js builds a feed entry, owned by Freedom's identity; and `swarm_sendGsoc` signs with a key that depends only on the topic (identifier `keccak256(topic)`, key mined with bee-js's deterministic `gsocMine` towards `keccak256("freedom-gsoc-v1:" + topic)`), so any client can compute the same key. Only GSOC's send half is involved, an ordinary chunk upload: receiving GSOC needs a full node, sending does not. S12 and the reading of 0.1.0 also produced drafts 14–16 in `docs/upstream/swarm-collaborative-docs.md`. Two questions.
+
+Freedom writes. Options: (a) today's `window.swarm`, changing only the library (draft 13): a storage interface with a Bee adapter (bee-js as today, for Swarm Desktop and any node) and a Freedom adapter; one feed layout for both, in which one identity owns all of a person's feeds and tabs are told apart by a session id in the topic; the member list as GSOC entries, one per index, written by Freedom through `swarm_sendGsoc` and by everyone else with the same key from bee-js; (b) ask Freedom for an upload of chunks the page signed, plus the #11 hook, which keeps the library's model and one identity per person in every browser but waits on Freedom; (c) nothing yet, Freedom read-only. Costs of (a): the largest library change; one person is two identities across browsers, and Freedom's identity also differs per site address; the room format depends on Freedom's GSOC derivation staying as it is; two adapters to test.
+
+Filing. Options: (a) issues for all four now; (b) issues for 14–16 now and 13 after S13 with its evidence; (c) talk to the maintainer first; (d) pull requests only. Leaning (b).
+
+**Decisions (Peter, 2026-10-08).** Freedom writes: **(a)**, after spike S13; (b) is the fallback if S13 fails. The room-format change lands with the D-26 move, which breaks the format anyway. Filing: **all four drafts as issues now**, from the owner's account, after the owner reviewed each one.
+
+Decide before the D-26 move (draft 14 shapes its unload guard) and before the user guide says anything new about Freedom.
+
+## D-28 — typst.ts version: wait for 0.8.0 or move now — DECIDED (2026-10-08)
+
+Context. D-04 pins typst.ts 0.7.0 (Typst 0.14.2) until 0.8.0 is final. On 2026-10-08 the newest release is still 0.8.0-rc3 (2026-06-29, Typst 0.15.0). `main` has embedded Typst 0.15.1 since 2026-08-30 and gained a unified compiler interface (#877) after rc3, so 0.8.0 final will differ from rc3 by at least that. #888–#892 have no reply. typst.app runs 0.15.1. Of 1,656 Universe packages, the newest version of 123 declares `compiler` 0.15.0 or later, and so do 102 of the 372 updated since 2026-07-17; importing those versions fails on 0.14.2. npm package sizes, unpacked: web compiler 28.4 MB at 0.7.0 and 30.2 MB at rc3, renderer 1.09 MB and 1.42 MB.
+
+Options: (a) wait for 0.8.0 final, as D-04 says; (b) move to 0.8.0-rc3 now behind a short spike (S14: the S2, S4 and S10 numbers, gzip size, the e2e suite, the starter's CeTZ 0.5.2), bump `COMPILER_VERSION`, and adapt again for #877 when 0.8.0 ships; (c) build the web compiler from typst.ts `main` at a pinned commit (Typst 0.15.1, the same as typst.app) with a script in `tools/`, as `build-lib.mjs` did for the collaboration library, at the cost of a Rust and wasm-pack toolchain in the release path.
+
+Leaning (b): rc3 has had no successor in three months, a growing share of Universe needs 0.15, and the step from rc3 to 0.8.0 is known. Fall back to (a) if S14 shows a regression; consider (c) if typst.ts is still silent when Typst 0.16 ships.
+
+Consequences: T12 promises a warning when a project's `typstVersion` differs from the running compiler, but none is built (the project map records the version at creation and nothing compares it), so the move adds it and updates `TYPST_VERSION`; the download grows by about 2 MB before compression; (b) or (c) supersedes D-04's "when it is final" clause.
+
+Decide before the first public post (D-21), when people start bringing documents from typst.app.
+
+**Decision (Peter, 2026-10-08).** **(b)**: move to 0.8.0-rc3 after spike S14, building the T12 version warning with it, and adapt again when 0.8.0 is final. Fall back to (a) if S14 shows a regression; reconsider (c) if typst.ts is still silent when Typst 0.16 ships.
