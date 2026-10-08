@@ -177,6 +177,8 @@ Proposal.
 
 Bee and Swarm Desktop cannot resolve `.gwei` yet (2026-09-05): Bee's ENS client treats the configured contract as an ENS registry (`owner`, `resolver`, then `contenthash`), while GNS exposes the ENS resolver profile (`contenthash(bytes32 node)`, `supportsInterface(0xbc1c58d1)`) on the name contract itself with no registry. Filed as ethersphere/bee#5600; draft PR ethersphere/bee#5601 implements it (probe the profile on dial, then `goens.NewResolverAt(...).Contenthash()`), verified live against mainnet. Until it lands, node users open the raw manifest URL, which the guide lists; the name is for gateway and Freedom users.
 
+Release lesson (2026-10-08, release `304f99b2…6e49`): `swarmtyp.gwei.domains` served the new `index.html` about four minutes after the upload, but the 11 MB compiler only after push-sync had carried all its chunks out of the light node, about seven minutes after the upload; in between, visitors through the gateway got "compiler failed: Failed to fetch" (the gateways answered 200 with the full length and cut the body). `tools/deploy` should advance the release feed only once the upload has synced, or once the large assets download whole through `download.gateway.ethswarm.org`.
+
 Costs: names are yearly (the manage panel shows `swarmtyp.gwei` expiring 2027-09-05; RENEW is a transaction, and a lapsed name drops the app's address), so the renewal goes on the owner's calendar and into the release checklist; two or three owner transactions for subdomains; the app-through-gateway test before the root moves; the read fallback is a small change in `src/swarm/` plus a status line saying which source is in use.
 
 ## D-26 — Project key and links under swarm-collaborative-docs 0.1.0 — DECIDED (2026-10-08)
@@ -225,4 +227,4 @@ Decide before the first public post (D-21), when people start bringing documents
 
 **Decision (Peter, 2026-10-08).** **(b)**: move to 0.8.0-rc3 after spike S14, building the T12 version warning with it, and adapt again when 0.8.0 is final. Fall back to (a) if S14 shows a regression; reconsider (c) if typst.ts is still silent when Typst 0.16 ships.
 
-Status 2026-10-08: S14 passed after one starter fix (`plus.circle` to `plus.o`); the move, the T12 notice and the legacy starters are on branch `s14-typst-ts-rc3`, e2e green in Chromium and Firefox. Merge and release wait for the owner.
+Status 2026-10-08: S14 passed after one starter fix (`plus.circle` to `plus.o`); the move, the T12 notice and the legacy starters were merged into `main` (d27e512) and released on the owner's instruction as `304f99b2d6bb3ea57c2221c6be117f2d653b64f94a9b22869f3744a40add6e49` behind the unchanged release feed manifest `b656fac5…a100`. Checked in Chromium: the stable address on the local node and `https://swarmtyp.gwei.domains/` both compile the starter on Typst 0.15.0.
