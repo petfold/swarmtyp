@@ -53,7 +53,14 @@ const results = { started: new Date().toISOString() };
   results.node = { readiness: st.readiness, wallet: st.account?.walletAddress, stamps: st.stamps };
   log('node', JSON.stringify(results.node));
   if (!DRY && !st.readiness.ok) throw new Error('Freedom node cannot publish yet: ' + st.readiness.message);
-  const wallet0 = st.account?.walletAddress;
+  // The setup state can briefly lack the account (e.g. right after a purchase); then ask Ant itself.
+  const nodeWallet = async () => {
+    for (let i = 0; i < 12; i++) { const s = await win.evaluate(() => window.publishSetup.getState()); if (s?.account?.walletAddress) return s.account.walletAddress.toLowerCase(); await sleep(2500); }
+    const port = (execSync('ss -ltnp 2>/dev/null | grep antd || true').toString().match(/127\.0\.0\.1:(\d+)/) || [])[1];
+    try { return port ? (await (await fetch(`http://127.0.0.1:${port}/wallet`)).json()).walletAddress?.toLowerCase() : undefined; } catch { return undefined; }
+  };
+  const wallet0 = await nodeWallet();
+  log('node wallet', wallet0);
   if (!DRY && !EXTERNAL && wallet0 !== NODE_WALLET) throw new Error('node wallet changed: ' + wallet0);
 
   // A vault for Freedom's signing identities (created once, never injected into the node).
@@ -69,8 +76,8 @@ const results = { started: new Date().toISOString() };
   if (!(await win.evaluate(() => window.identity.isUnlocked())).isUnlocked) log('vault unlock', JSON.stringify(await win.evaluate((p) => window.identity.unlock(p), password)));
   results.vault = await win.evaluate(() => window.identity.getStatus());
   log('vault', JSON.stringify(results.vault).slice(0, 300));
-  st = await win.evaluate(() => window.publishSetup.getState());
-  if (st.account?.walletAddress !== wallet0) throw new Error('node wallet changed after the vault: ' + st.account?.walletAddress);
+  const wallet1 = await nodeWallet();
+  if (wallet1 !== wallet0) throw new Error('node wallet changed after the vault: ' + wallet1);
 
   // Answer Freedom's permission prompts as they appear (connection, feeds, messaging, uploads, a publisher identity).
   let approving = true;
