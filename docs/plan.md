@@ -66,13 +66,35 @@ Milestone M3: a new user with a wallet and Swarm Desktop creates a project, impo
 
 ## Phase 4 — Private projects and hardening
 
-- Encryption hook in `swarm-collaborative-docs` (upstream), project key carried in the link fragment; encrypted snapshots, deltas and blobs.
+- Encryption hook in `swarm-collaborative-docs` (upstream), project key carried in the link fragment; encrypted snapshots, deltas and blobs. Design modelled on Fileverse's: `upstream/swarm-collaborative-docs.md` draft 17 (2026-10-09).
 - TURN option in settings; own STUN default (D-15).
 - ENS name for the app. Flowing websites from Typst's HTML export once Typst lifts its feature flag and typst.ts exposes the exporter in the web build (D-24, S11 part 3: wait for Typst, build nothing of our own).
 - Incremental compile if S2 found a path; large-document performance.
 - Accessibility pass; keyboard-only operation.
 
 Milestone M4: a project whose feeds a gateway operator can see but cannot read.
+
+## Alongside swarmtyp: Fileverse dDocs and dSheets on swarm-collaborative-docs (proposal, 2026-10-09)
+
+Context. Our forks of Fileverse's editors (`../fileverse-ddoc`, `../fileverse-dsheets`, AGPL-3.0) keep documents on Swarm, but live editing still runs through Fileverse's Socket.IO server (`references.md`, "Other editors on Swarm"). Upstream has not answered our storage pull requests in seven weeks (pinged 2026-10-09), and replacing their sync server is not a change they would take as a pull request. Proposal: keep Swarm-native forks in which live editing runs on swarm-collaborative-docs, with no server, and the same room model, invites and Freedom path as swarmtyp.
+
+Why it fits. Both editors already keep the document in a Yjs `Y.Doc` with `y-indexeddb`, and keep the server inside one module (`sync-local`: `SyncManager`, the socket client, presence). The fork replaces that module with a `SwarmDoc` session behind the same interface.
+
+What the library must offer first, all of it shared with swarmtyp:
+- the storage interface and the `window.swarm` adapter (#20), and read-only participants (#22); the write-signal fixes (#21);
+- free-form presence: dDoc draws ProseMirror carets from Yjs relative positions, and dSheets' presence is a sheet and a cell (`{ r, c }`); neither fits `CursorPosition { anchor, head, scope }`. The maintainer asked in #17 for concrete fields before adding a free-form payload; these are they;
+- encryption (`upstream/swarm-collaborative-docs.md` draft 17): Fileverse documents are end-to-end encrypted today, and a fork that stores plaintext would be a step back.
+
+Steps:
+- **F0. One spike per editor**, in the forks: bind the editor's `Y.Doc` to a `SwarmDoc` session, two browsers through the Swarm Desktop node. dDoc: Tiptap's collaboration extension plus carets through a Yjs Awareness fed from the library's events; dSheets: the workbook binding and `addPresences`. Measure snapshot sizes, which set the cost of writing through Freedom (S13).
+- **F1. A `SwarmSyncManager` per editor** behind the existing sync interface, chosen by a host prop, so the fork stays close to upstream and rebases cleanly.
+- **F2. Encryption** from the library, or a layer in the fork until it lands.
+- **F3. Freedom** through `window.swarm` once #20 lands; demos deployed at their own addresses.
+- **F4. Storage stays upstream:** the storage pieces remain pull requests to Fileverse (fileverse-ddocs#562, fileverse-dsheets#429, and the Swarm modules not yet opened), so the fork's own difference is the sync layer.
+
+Licence and naming. The forks stay AGPL-3.0; swarm-collaborative-docs (Apache-2.0) may be combined into AGPL-3.0 work. Every deployment links its source. The forks must not present themselves as Fileverse's products: their own names, with credit to Fileverse.
+
+Not decided (owner): whether to fork at all or wait for Fileverse; whether the two editors share one sync package, since they already share Fileverse's middleware; whether the forks move to Solar Punk or stay under `petfold`. Decide after F0. The plan is also kept at the root of each fork (`SWARM-COLLAB-PLAN.md`).
 
 ## Later, maybe
 

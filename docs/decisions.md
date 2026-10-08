@@ -52,6 +52,8 @@ Text files as `Y.Text` keyed by path, a `files` index map, a `project` map. Imag
 
 The project id in the URL fragment grants read and write. Phase 4 adds a project key in the fragment and encrypted payloads via an upstream library hook. ACT is the wrong tool for the snapshot stream (forward-only revocation, per-upload history bookkeeping); it may suit published documents.
 
+Status 2026-10-09: with D-26 the library's room key is that fragment key, so the path is shorter. `upstream/swarm-collaborative-docs.md` draft 17 proposes the hook, modelled on how Fileverse encrypts: a content key derived from the room secret, AES-256-GCM on every payload the library writes, and read-only links and rotation as a second step. swarmtyp encrypts its own blobs (images) with a key derived from the same secret, as Fileverse encrypts its images.
+
 ## D-13 — Repository under `Solar-Punk-Ltd` — PROPOSED
 
 Same home as `swarm-collaborative-docs` and `dappdata`.
