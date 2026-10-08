@@ -242,7 +242,16 @@ Method: a small test page opened as `bzz://` in Freedom (the Playwright harness 
 
 Exit: 1–3 work on mainnet between Freedom 0.8.7 and the Swarm Desktop node, and 4 fits the library's polling (2 s signal, 5 s member list, 15 s snapshots). If not, D-27 falls back to (b).
 
-Result: not run yet.
+Result, part 1 (2026-10-08, dry run on a throwaway profile without storage; `spikes/s13/s13.cjs --dry`, Freedom at 20152029 with Ant 0.5.61, bee-js 13.1 on the Swarm Desktop node): **the read half works; writes wait for storage.**
+
+- Feed entries written by bee-js on the Bee node were readable in Freedom with `swarm_readFeedEntry({ topic, owner, index })` 0.4 to 0.9 s after the write.
+- A member-list entry written by bee-js as a GSOC chunk, with the key mined from the topic as Freedom does it, was readable in Freedom with `swarm_readSingleOwnerChunk({ address })` on the first try.
+- The library's read rhythm for one peer without a channel (signal every 2 s, member list every 5 s, snapshot every 15 s) made 37 to 44 reads a minute for two minutes, no rate limiting (Freedom allows 600 a minute per connected site).
+- What a page needs first: a connection grant, a feed-access grant (one prompt with "auto-approve" ticked covers later writes) and a messaging grant; and a Freedom identity vault, created and unlocked. Creating the vault does not touch the node: `beeInjected: false`; only `identity.injectAll`, which the driver never calls, replaces the node's key. The page then signs as an app-scoped identity (`swarm_getSigningIdentity`).
+- Without storage every write fails at once with "no-usable-stamps".
+- A driver bug worth remembering: `identity.hasVault()` and `isUnlocked()` answer `{ hasVault }` and `{ isUnlocked }`; treating them as booleans skipped the vault, and the feed prompt then kept its approve button disabled until every request timed out.
+
+Part 2, the writes, runs once the S13 profile's storage is bought (`spikes/s13/payment.md`).
 
 ## S14 — typst.ts 0.8.0-rc3 in swarmtyp (D-28)
 

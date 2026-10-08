@@ -1,0 +1,8 @@
+{
+  "name": "swarmtyp-spike-s13",
+  "private": true,
+  "description": "S13: writing from Freedom through today's window.swarm (throwaway); Playwright comes from ../freedom-browser",
+  "dependencies": {
+    "@ethersphere/bee-js": "13.1.0"
+  }
+}
