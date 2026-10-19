@@ -306,3 +306,20 @@ Result (2026-10-08, Node 22 and headless Chromium on the development machine, 0.
 - **Bytes on a cold load:** the gzipped compiler grows by 185 KB (10.84 to 11.02 MB) and the renderer by 306 KB. The renderer ships uncompressed; gzipping it like the compiler would save about 0.8 MB per cold load on either version.
 
 Consequences: D-28's move goes ahead (done on the branch); recompiles cost 10–30 % more and page painting about a fifth of before, so the preview after a keystroke is faster overall.
+
+## S15 — ACT behind a feed (D-29, point 4)
+
+Question: can ACT-protected snapshots sit behind a public feed, so that a document keeps one address and its versions while reading it needs an ACT grant? And what does revoking a reader do to old and new versions?
+
+Method: against this laptop's Bee 2.8.3 light node (Swarm Desktop's data, an immutable batch), `spike/act-feeds.spike.ts` in swarm-dstore. Create an access list with one reader key (`POST /grantee`); upload a snapshot with `swarm-act: true` under the returned history (`POST /bzz`); write a feed entry `timestamp || encrypted reference || history address` (72 bytes) with swarm-dstore's transport; read it back through the feed with the ACT headers (the publisher is the node's public key) and without them. Then revoke the reader (`PATCH /grantee`), upload a second version under the history it returns, and try each history against each version.
+
+Exit: the snapshot reads back through the feed only with the ACT headers, and the effect of a revocation on old and new versions is known.
+
+Result (2026-10-19): **passes. ACT works behind a feed if each entry carries its own version's history address.**
+- `POST /grantee` returns 201 and a history address. An upload under it returns an encrypted reference and the same history address.
+- Through the feed with the ACT headers: 200 and the snapshot. Without them: 404 ("address not found or incorrect").
+- Revoking re-keys: `PATCH /grantee` returns 200 and a new history address. The second version, uploaded under it, opens with the new history and not with the old one (404).
+- Old versions stay readable with their own history address, or with the newest history plus the version's time (`swarm-act-timestamp`); with the newest history and the current time, 404. Revocation needs no re-upload: it governs only what is published after it, as with any encryption.
+- So a feed entry grows from 40 to 72 bytes; its first 40 are still the layout bee-js reads.
+- Not tested: reading as a real grantee from a second node (one node here). An ultra-light second node on this machine, which needs no funding, could test it.
+- Limits: readers are Bee node keys and decryption runs in the reader's own node, so a reader needs a node (a browser without one cannot be a reader); the publisher is the uploading node's key, not the document's feed key, so managing access is tied to that node; Freedom cannot open ACT content yet (freedom-browser#648).
