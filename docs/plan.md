@@ -82,7 +82,7 @@ Context. Fileverse's open-source editors (dDocs and dSheets, AGPL-3.0) keep the 
 - Move onto today's upstream. The branches sit on ddoc 4.6.1 and dsheet 4.1.0; upstream is at ddoc 7.0.0 and dsheet 4.1.21. ddoc 5.0 moved styling to the host app, 6.0 added a persistence API (`@fileverse-dev/ddoc/persistence`: `readDdocContent`, `mergeDdocContent`, `getDdocContentFingerprint`, and the `onLocalChange` and `isNewDocument` props), and 7.0 changed how the editor is sized. Document storage on Swarm should sit on 6.0's persistence API rather than on `initialContent` and `onChange`.
 - Rebuild the Swarm demos from upstream's current demo apps rather than replaying the branches. Most of the Swarm demo code is new files that carry over unchanged.
 - Sharing through ACT (D-29, point 4): read access per named person by public key, revocable, with history, in place of the per-person key wrapping in Fileverse's own code. To design: how ACT combines with feed-based versions. Readers need a node key of their own, and Freedom support waits on freedom-browser#648.
-- One module or two. The dDocs and dSheets copies are nearly identical (about 1,800 lines; `swarm-common`, `swarm-stamps` and `swarm-diagnostics` match exactly). We choose the structure we think best, build it, and offer it finished, rather than asking Fileverse to choose first; the same holds for stage 2.
+- One module. The dDocs and dSheets copies were nearly identical (about 1,800 lines), so since 2026-10-19 they live as one module, `swarm-dstore` (github.com/petfold/swarm-dstore, BSD-3-Clause), with the per-editor differences as settings (`namespace: 'ddoc'` or `'dsheet'`). Each pull request carries a copy of it, so Fileverse takes on no new dependency. We choose the structure we think best, build it, and offer it finished, rather than asking Fileverse to choose first; the same holds for stage 2.
 
 Milestone: both pull requests merged, or a clear no.
 
@@ -104,7 +104,7 @@ Steps:
 
 Licence and naming. Code offered to Fileverse goes in under their AGPL-3.0; swarm-collaborative-docs (Apache-2.0) may be combined into AGPL-3.0 work. If we fork: every deployment links its source, and the forks must not present themselves as Fileverse's products: their own names, with credit to Fileverse.
 
-Not decided (owner): whether the two editors share one Swarm package (stage 1) and one sync package (stage 2), since they already share Fileverse's middleware; whether the work moves to Solar Punk or stays under `petfold`. Each fork's `SWARM-COLLAB-PLAN.md` still carries the 2026-10-09 proposal and points here.
+Not decided (owner): whether the two editors share one sync package (stage 2), since they already share Fileverse's middleware; whether the work moves to Solar Punk or stays under `petfold`. Each fork's `SWARM-COLLAB-PLAN.md` still carries the 2026-10-09 proposal and points here.
 
 ## Later, maybe
 
