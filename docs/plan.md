@@ -74,11 +74,18 @@ Milestone M3: a new user with a wallet and Swarm Desktop creates a project, impo
 
 Milestone M4: a project whose feeds a gateway operator can see but cannot read.
 
-## Alongside swarmtyp: Fileverse dDocs and dSheets on swarm-collaborative-docs (proposal, 2026-10-09)
+## Alongside swarmtyp: Swarm in Fileverse dDocs and dSheets (plan, revised 2026-10-19; D-29)
 
-Context. Our forks of Fileverse's editors (`../fileverse-ddoc`, `../fileverse-dsheets`, AGPL-3.0) keep documents on Swarm, but live editing still runs through Fileverse's Socket.IO server (`references.md`, "Other editors on Swarm"). Upstream has not answered our storage pull requests in seven weeks (pinged 2026-10-09), and replacing their sync server is not a change they would take as a pull request. Proposal: keep Swarm-native forks in which live editing runs on swarm-collaborative-docs, with no server, and the same room model, invites and Freedom path as swarmtyp.
+Context. Fileverse's open-source editors (dDocs and dSheets, AGPL-3.0) keep the document in a Yjs `Y.Doc` with `y-indexeddb` and run live editing through Fileverse's own Socket.IO server. Our Swarm branches of both (`../fileverse-ddoc`, `../fileverse-dsheets`; `references.md`, "Other editors on Swarm") add Swarm as a storage backend; live editing still goes through that server. In October Fileverse merged both storage seams we offered (fileverse-dsheets#429 on 2026-10-09, fileverse-ddocs#562 on 2026-10-14), so they take storage-agnostic changes. The 2026-10-09 version of this plan proposed Swarm-native forks from the start. Revised (D-29): upstream first, in two stages, and fork only if Fileverse declines.
 
-Why it fits. Both editors already keep the document in a Yjs `Y.Doc` with `y-indexeddb`, and keep the server inside one module (`sync-local`: `SyncManager`, the socket client, presence). The fork replaces that module with a `SwarmDoc` session behind the same interface.
+**Stage 1. Swarm as a storage backend, offered upstream.** Open the second pull request of each pair, the Swarm modules themselves: images and document snapshots with version history on a feed, stamp helpers, diagnostics, and a transport for a Bee node or Freedom's `window.swarm`, with no new dependencies. Before opening them:
+- Move onto today's upstream. The branches sit on ddoc 4.6.1 and dsheet 4.1.0; upstream is at ddoc 7.0.0 and dsheet 4.1.21. ddoc 5.0 moved styling to the host app, 6.0 added a persistence API (`@fileverse-dev/ddoc/persistence`: `readDdocContent`, `mergeDdocContent`, `getDdocContentFingerprint`, and the `onLocalChange` and `isNewDocument` props), and 7.0 changed how the editor is sized. Document storage on Swarm should sit on 6.0's persistence API rather than on `initialContent` and `onChange`.
+- Rebuild the Swarm demos from upstream's current demo apps rather than replaying the branches. Most of the Swarm demo code is new files that carry over unchanged.
+- One module or two. The dDocs and dSheets copies are nearly identical (about 1,800 lines; `swarm-common`, `swarm-stamps` and `swarm-diagnostics` match exactly). We choose the structure we think best, build it, and offer it finished, rather than asking Fileverse to choose first; the same holds for stage 2.
+
+Milestone: both pull requests merged, or a clear no.
+
+**Stage 2. Live editing over Swarm, offered upstream.** The swarmtyp kind of collaboration: a `SwarmDoc` session from swarm-collaborative-docs instead of the Socket.IO server, with no server, and the same room model, invites and Freedom path as swarmtyp. Both editors keep the server inside one module (`sync-local`: `SyncManager`, the socket client, presence), so the change to offer is a `SwarmDoc` session behind the same interface.
 
 What the library must offer first, all of it shared with swarmtyp:
 - the storage interface and the `window.swarm` adapter (#20), and read-only participants (#22); the write-signal fixes (#21);
@@ -86,15 +93,17 @@ What the library must offer first, all of it shared with swarmtyp:
 - encryption (`upstream/swarm-collaborative-docs.md` draft 17): Fileverse documents are end-to-end encrypted today, and a fork that stores plaintext would be a step back.
 
 Steps:
-- **F0. One spike per editor**, in the forks: bind the editor's `Y.Doc` to a `SwarmDoc` session, two browsers through the Swarm Desktop node. dDoc: Tiptap's collaboration extension plus carets through a Yjs Awareness fed from the library's events; dSheets: the workbook binding and `addPresences`. Measure snapshot sizes, which set the cost of writing through Freedom (S13).
-- **F1. A `SwarmSyncManager` per editor** behind the existing sync interface, chosen by a host prop, so the fork stays close to upstream and rebases cleanly.
-- **F2. Encryption** from the library, or a layer in the fork until it lands.
+- **F0. One spike per editor**, on our branches: bind the editor's `Y.Doc` to a `SwarmDoc` session, two browsers through the Swarm Desktop node. dDoc: Tiptap's collaboration extension plus carets through a Yjs Awareness fed from the library's events; dSheets: the workbook binding and `addPresences`. Measure snapshot sizes, which set the cost of writing through Freedom (S13).
+- **F1. A `SwarmSyncManager` per editor** behind the existing sync interface, chosen by a host prop. This is the shape offered to Fileverse, and if we fork, it keeps the fork close to upstream so it rebases cleanly.
+- **F2. Encryption** from the library, or a layer of our own until it lands.
 - **F3. Freedom** through `window.swarm` once #20 lands; demos deployed at their own addresses.
-- **F4. Storage stays upstream:** the storage pieces remain pull requests to Fileverse (fileverse-ddocs#562, fileverse-dsheets#429, and the Swarm modules not yet opened), so the fork's own difference is the sync layer.
+- **F4. Offer it to Fileverse**, with the spike's results and the demos.
 
-Licence and naming. The forks stay AGPL-3.0; swarm-collaborative-docs (Apache-2.0) may be combined into AGPL-3.0 work. Every deployment links its source. The forks must not present themselves as Fileverse's products: their own names, with credit to Fileverse.
+**Stage 3. Fork, only if Fileverse declines.** Swarm-native forks in which live editing runs on swarm-collaborative-docs. The fork's own difference is the sync layer, plus the storage modules if Fileverse declined stage 1 as well.
 
-Not decided (owner): whether to fork at all or wait for Fileverse; whether the two editors share one sync package, since they already share Fileverse's middleware; whether the forks move to Solar Punk or stay under `petfold`. Decide after F0. The plan is also kept at the root of each fork (`SWARM-COLLAB-PLAN.md`).
+Licence and naming. Code offered to Fileverse goes in under their AGPL-3.0; swarm-collaborative-docs (Apache-2.0) may be combined into AGPL-3.0 work. If we fork: every deployment links its source, and the forks must not present themselves as Fileverse's products: their own names, with credit to Fileverse.
+
+Not decided (owner): whether the two editors share one Swarm package (stage 1) and one sync package (stage 2), since they already share Fileverse's middleware; whether the work moves to Solar Punk or stays under `petfold`. Each fork's `SWARM-COLLAB-PLAN.md` still carries the 2026-10-09 proposal and points here.
 
 ## Later, maybe
 

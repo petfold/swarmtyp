@@ -230,3 +230,11 @@ Decide before the first public post (D-21), when people start bringing documents
 **Decision (Peter, 2026-10-08).** **(b)**: move to 0.8.0-rc3 after spike S14, building the T12 version warning with it, and adapt again when 0.8.0 is final. Fall back to (a) if S14 shows a regression; reconsider (c) if typst.ts is still silent when Typst 0.16 ships.
 
 Status 2026-10-08: S14 passed after one starter fix (`plus.circle` to `plus.o`); the move, the T12 notice and the legacy starters were merged into `main` (d27e512) and released on the owner's instruction as `304f99b2d6bb3ea57c2221c6be117f2d653b64f94a9b22869f3744a40add6e49` behind the unchanged release feed manifest `b656fac5…a100`. Checked in Chromium: the stable address on the local node and `https://swarmtyp.gwei.domains/` both compile the starter on Typst 0.15.0.
+
+## D-29 — Swarm in Fileverse's editors: upstream first, fork only if declined — PROPOSED (2026-10-19)
+
+Context. The 2026-10-09 plan ("Alongside swarmtyp" in `plan.md`) proposed Swarm-native forks of Fileverse dDocs and dSheets with live editing on swarm-collaborative-docs, and left open "whether to fork at all or wait for Fileverse". Fileverse then merged both storage seams we had offered: fileverse-dsheets#429, narrowed to the smart-contract ABI reference, on 2026-10-09, and fileverse-ddocs#562, storage-agnostic image props, on 2026-10-14. Both are released (dsheet 4.1.19, ddoc 5.1.14). So Fileverse takes storage-agnostic changes; whether it would take Swarm code itself, or a different sync layer, is untested.
+
+Options: (a) fork now, as the 2026-10-09 plan proposed; (b) upstream first, in two stages: Swarm as a storage backend for both editors offered for Fileverse's code, then swarm-collaborative-docs live editing offered the same way, forking only if Fileverse declines; (c) wait for Fileverse to add Swarm itself.
+
+**Direction (Peter, 2026-10-19).** **(b)**: start with the more modest goal, Swarm as a storage backend for both editors, as originally planned, and try to get Fileverse to accept it into their code. Then the swarmtyp kind of collaboration, offered to Fileverse in turn. Either they accept, or we fork. Recorded as PROPOSED until confirmed. Stages and steps: `plan.md`, "Alongside swarmtyp".
